@@ -1,6 +1,6 @@
 # 🧠 agents-memory
 
-Sistema de memoria local ultra liviano y portátil para Agentes de IA en Antigravity, VS Code y entornos Agentic.
+Sistema de memoria local ultra liviano y portátil para Agentes de IA en Antigravity, Cursor, Copilot, OpenCode y entornos Agentic.
 
 Guarda **firmas semánticas sintéticas** en una base de datos **SQLite local embebida**, logrando reducir hasta un **95% el consumo de tokens** e inyectando únicamente el contexto necesario por sesión.
 

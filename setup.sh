@@ -48,24 +48,25 @@ chmod +x "$MEMORY_REPO_DIR/scripts/memory-cli.js"
 echo ""
 echo "🤖 Selecciona el entorno o Harness de IA que utilizas:"
 echo "1) Gemini Antigravity (~/.gemini/config/skills/)"
-echo "2) OpenCode (~/.config/opencode/skills/ & ~/.agents/skills/)"
-echo "3) Agentes Estándar / Agentic CLI (~/.agents/skills/)"
-echo "4) GitHub Copilot (~/.copilot/skills/)"
-echo "5) Hermes CLI (~/.hermes/skills/)"
-echo "6) Instalar en TODOS los entornos detectados"
-echo "7) Omitir instalación de Skill"
+echo "2) Cursor IDE (~/.cursor/skills/)"
+echo "3) OpenCode (~/.config/opencode/skills/ & ~/.agents/skills/)"
+echo "4) Agentes Estándar / Agentic CLI (~/.agents/skills/)"
+echo "5) GitHub Copilot (~/.copilot/skills/)"
+echo "6) Hermes CLI (~/.hermes/skills/)"
+echo "7) Instalar en TODOS los entornos detectados"
+echo "8) Omitir instalación de Skill"
 echo ""
 
 HARNESS_CHOICE=""
 if [ -t 0 ]; then
-    read -p "Ingresa tu opción (1-7) [por defecto: 6]: " HARNESS_CHOICE || true
+    read -p "Ingresa tu opción (1-8) [por defecto: 7]: " HARNESS_CHOICE || true
 elif [ -r /dev/tty ]; then
     read -p "Ingresa tu opción (1-7) [por defecto: 6]: " HARNESS_CHOICE < /dev/tty 2>/dev/null || true
 fi
 
 if [ -z "$HARNESS_CHOICE" ]; then
-    echo "ℹ️ Modo no interactivo detectado. Seleccionando opción 6 (TODOS los entornos por defecto)..."
-    HARNESS_CHOICE=6
+    echo "ℹ️ Modo no interactivo detectado. Seleccionando opción 7 (TODOS los entornos por defecto)..."
+    HARNESS_CHOICE=7
 fi
 
 install_antigravity() {
@@ -73,6 +74,13 @@ install_antigravity() {
     echo "  -> Instalando Skill en Gemini Antigravity: $GEMINI_SKILLS"
     mkdir -p "$GEMINI_SKILLS/agent-memory"
     cp -f "$SKILL_SOURCE" "$GEMINI_SKILLS/agent-memory/SKILL.md"
+}
+
+install_cursor() {
+    CURSOR_SKILLS="$HOME_DIR/.cursor/skills"
+    echo "  -> Instalando Skill en Cursor IDE: $CURSOR_SKILLS"
+    mkdir -p "$CURSOR_SKILLS/agent-memory"
+    cp -f "$SKILL_SOURCE" "$CURSOR_SKILLS/agent-memory/SKILL.md"
 }
 
 install_opencode() {
@@ -110,31 +118,36 @@ case $HARNESS_CHOICE in
         install_antigravity
         ;;
     2)
-        install_opencode
+        install_cursor
         ;;
     3)
-        install_agents_std
+        install_opencode
         ;;
     4)
-        install_copilot
+        install_agents_std
         ;;
     5)
-        install_hermes
+        install_copilot
         ;;
     6)
-        echo "🚀 Registrando en todos los arneses de IA..."
-        install_antigravity
-        install_opencode
-        install_agents_std
-        install_copilot
         install_hermes
         ;;
     7)
+        echo "🚀 Registrando en todos los arneses de IA..."
+        install_antigravity
+        install_cursor
+        install_opencode
+        install_agents_std
+        install_copilot
+        install_hermes
+        ;;
+    8)
         echo "⏭️ Instalación de skill omitida."
         ;;
     *)
         echo "Opción no válida. Instalando en todos los entornos por defecto..."
         install_antigravity
+        install_cursor
         install_opencode
         install_agents_std
         install_copilot
