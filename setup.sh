@@ -60,8 +60,9 @@ HARNESS_CHOICE=""
 if [ -t 0 ]; then
     read -p "Ingresa tu opción (1-7) [por defecto: 6]: " HARNESS_CHOICE || true
 else
-    # Intento seguro sin que sh detenga la ejecución por 'set -e'
-    HARNESS_CHOICE=$( (read -p "Ingresa tu opción (1-7) [por defecto: 6]: " choice < /dev/tty && echo "$choice") 2>/dev/null || echo "" )
+    if [ -t 1 ] && [ -c /dev/tty ]; then
+        HARNESS_CHOICE=$(bash -c 'read -p "Ingresa tu opción (1-7) [por defecto: 6]: " choice < /dev/tty && echo "$choice"' 2>/dev/null || echo "")
+    fi
 fi
 
 if [ -z "$HARNESS_CHOICE" ]; then
