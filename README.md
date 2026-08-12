@@ -11,7 +11,7 @@ Guarda **firmas semánticas sintéticas** en una base de datos **SQLite local em
 Puedes instalar y configurar automáticamente el sistema en cualquier proyecto o equipo ejecutando:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AdelysAlberto/agent-memory/main/install.sh | bash
+bash <(curl -fsSL https://raw.githubusercontent.com/AdelysAlberto/agent-memory/main/install.sh)
 ```
 
 O si clonaste el repositorio manualmente:
