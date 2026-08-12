@@ -13,7 +13,21 @@ if ! command -v node &> /dev/null; then
 fi
 
 HOME_DIR="$HOME"
-MEMORY_REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TARGET_DIR="$HOME_DIR/.agent-memory"
+
+# Si se ejecuta mediante curl | sh desde cualquier directorio que no sea el repositorio clonado
+if [ ! -f "package.json" ]; then
+    echo "📥 Clonando / actualizando repositorio en $TARGET_DIR..."
+    if [ -d "$TARGET_DIR/.git" ]; then
+        git -C "$TARGET_DIR" pull --quiet
+    else
+        git clone --quiet https://github.com/AdelysAlberto/agent-memory.git "$TARGET_DIR"
+    fi
+    MEMORY_REPO_DIR="$TARGET_DIR"
+else
+    MEMORY_REPO_DIR="$(pwd)"
+fi
+
 SKILL_SOURCE="$MEMORY_REPO_DIR/SKILL.md"
 
 # Instalar dependencias si no existen
