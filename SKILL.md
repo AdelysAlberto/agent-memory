@@ -1,50 +1,52 @@
 ---
 name: agent-memory
-description: Sistema de memoria local autónomo para consultar y guardar firmas semánticas en SQLite, reduciendo hasta un 95% el consumo de tokens en entornos de Agentes de IA (Antigravity, Copilot, OpenCode, Hermes).
+description: Autonomous local memory system to query and store synthetic semantic signatures in SQLite, reducing token consumption by up to 95% across AI Agent environments (Antigravity, Copilot, OpenCode, Hermes).
 ---
 
-# 🧠 Agent Memory Skill (Sistema de Memoria Autónomo)
+# 🧠 Agent Memory Skill (Autonomous Memory System)
 
-Esta skill te permite **consultar, registrar y gestionar firmas semánticas sintéticas** en una base de datos SQLite local embebida (`.agents/memory.db`). 
+This skill enables AI agents to **query, register, and manage synthetic semantic signatures** in a centralized local SQLite database (`~/.agents-memory/memory.db`).
 
-Su objetivo principal es mantener la consistencia arquitectónica entre conversaciones y sesiones, reduciendo drásticamente el consumo de tokens de entrada al evitar releer repetidamente el código fuente o la documentación.
+Its primary objective is to maintain architectural consistency across chat sessions while drastically reducing input token consumption by preventing repetitive reading of source code and documentation.
 
 ---
 
-## ⚡ Instrucciones de Operación Autónoma para el Agente
+## ⚡ Autonomous Agent Operating Directives
 
-### 1. Auto-Consultas (Antes de Proponer o Diseñar Código)
-Antes de implementar un patrón técnico nuevo, componente o arquitectura (ej. paginación, auth, tablas, estado, middleware):
-- Consulta silenciosamente las memorias locales ejecutando:
+### 1. Auto-Retrieval (Before Proposing or Designing Code)
+Before implementing any new technical pattern, component, or architecture (e.g., pagination, auth, tables, state management, middleware):
+- Silently query local memories by executing:
   ```bash
-  node /Users/adelysalberto/Projects/utils/agents-memory/scripts/memory-cli.js search --query "<concepto_o_tema>"
+  node /Users/adelysalberto/Projects/utils/agents-memory/scripts/memory-cli.js search --query "<concept_or_topic>"
   ```
-  *(Nota: Si omito `--project`, el script auto-detecta el proyecto actual).*
-- Si existe una firma previa relevante, **adopta y respeta el mismo patrón técnico**, convenciones y decisiones previamente aprobadas.
+  *(Note: If `--project` is omitted, the CLI automatically detects the current project name).*
+- If a relevant previous signature exists, **adopt and adhere to the same technical pattern**, conventions, and previously approved architectural decisions.
 
-### 2. Taxonomía de Tags en 3 Capas (Regla Obligatoria)
-Para evitar pérdida de información y etiquetas vágas, **TODO guardado debe incluir de 3 a 5 tags en kebab-case organizados en 3 capas**:
-1. **Capa 1 - Concepto Principal / Dominio**: Término técnico genérico (ej: `pagination`, `auth`, `state-management`, `api-rest`, `database`).
-2. **Capa 2 - Tecnología / Herramienta**: Stack exacto involucrado (ej: `sqlite`, `zustand`, `express`, `react`, `css-modules`).
-3. **Capa 3 - Módulo / Entidad específica**: Dominio del proyecto (ej: `products-list`, `users-table`, `jwt-middleware`).
+### 2. 3-Layer Tag Taxonomy (Mandatory Rule)
+To prevent information loss and vague tags, **EVERY saved memory signature MUST include 3 to 5 kebab-case tags organized into 3 layers**:
+1. **Layer 1 - Main Concept / Domain**: Generic technical domain (e.g., `pagination`, `auth`, `state-management`, `api-rest`, `database`).
+2. **Layer 2 - Technology / Tooling**: Exact tech stack involved (e.g., `sqlite`, `zustand`, `express`, `react`, `css-modules`).
+3. **Layer 3 - Specific Module / Entity**: Project domain module (e.g., `products-list`, `users-table`, `jwt-middleware`).
 
-### 3. Auto-Guardado & Notificación Visual 💾
-Al completar una refactorización, feature o solución a un bug no trivial, evalúa autónomamente:
-¿Esta solución establece un estándar reutilizable, soluciona un problema complejo o crea un módulo clave?
-- **SI LA RESPUESTA ES SÍ**: Registra la firma de memoria ejecutando:
+*Tag Rule*: Always use lowercase, kebab-case, english/neutral terms without redundant synonyms.
+
+### 3. Auto-Save & Visual Chat Notification 💾
+Upon completing a refactoring, feature, or non-trivial bug fix, autonomously evaluate:
+*Does this solution establish a reusable standard, solve a complex issue, or create a core module?*
+- **IF YES**: Register the synthetic memory signature by executing:
   ```bash
   node /Users/adelysalberto/Projects/utils/agents-memory/scripts/memory-cli.js save \
-    --title "<titulo_breve>" \
-    --summary "<resumen_sintetico_denso>" \
-    --category "<categoria>" \
-    --tags "<capa1,capa2,capa3>"
+    --title "<brief_title>" \
+    --summary "<dense_synthetic_summary>" \
+    --category "<category>" \
+    --tags "<layer1,layer2,layer3>"
   ```
-- **NOTIFICACIÓN OBLIGATORIA EN CHAT**: Confirma en 1 sola línea al usuario al final de la respuesta:
-  `💾 **Memoria Guardada**: [<nombre_proyecto>] "<titulo_breve>" (Tags: #tag1, #tag2, #tag3)`
+- **MANDATORY CHAT NOTIFICATION**: Always append a 1-line confirmation at the very end of your response using the floppy disk icon:
+  `💾 **Memoria Guardada**: [<project_name>] "<brief_title>" (Tags: #tag1, #tag2, #tag3)`
 
-### 4. Auto-Onboarding Inicial de Proyectos
-Al iniciar a trabajar en un proyecto nuevo o analizar su arquitectura general:
-- Ejecuta el subcomando de síntesis automática:
+### 4. Automatic Initial Project Onboarding
+When starting work on a new project or analyzing its general architecture for the first time:
+- Execute the automatic synthesis onboarding command:
   ```bash
   node /Users/adelysalberto/Projects/utils/agents-memory/scripts/memory-cli.js onboard
   ```
