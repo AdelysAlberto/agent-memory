@@ -45,11 +45,6 @@ node "$MEMORY_REPO_DIR/scripts/memory-cli.js" init
 # Permisos
 chmod +x "$MEMORY_REPO_DIR/scripts/memory-cli.js"
 
-# Si el script se invoca mediante pipe (curl | sh), redirigimos la entrada al TTY de la terminal para permitir la interacción
-if [ ! -t 0 ] && [ -e /dev/tty ]; then
-    exec < /dev/tty
-fi
-
 echo ""
 echo "🤖 Selecciona el entorno o Harness de IA que utilizas:"
 echo "1) Gemini Antigravity (~/.gemini/config/skills/)"
@@ -61,7 +56,11 @@ echo "6) Instalar en TODOS los entornos detectados"
 echo "7) Omitir instalación de Skill"
 echo ""
 
-read -p "Ingresa tu opción (1-7) [por defecto: 6]: " HARNESS_CHOICE
+if [ -e /dev/tty ]; then
+    read -p "Ingresa tu opción (1-7) [por defecto: 6]: " HARNESS_CHOICE < /dev/tty
+else
+    read -p "Ingresa tu opción (1-7) [por defecto: 6]: " HARNESS_CHOICE
+fi
 HARNESS_CHOICE=${HARNESS_CHOICE:-6}
 
 install_antigravity() {
