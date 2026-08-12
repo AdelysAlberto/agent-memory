@@ -1,0 +1,18 @@
+{
+  "name": "agents-memory",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node scripts/server.js",
+    "ui": "node scripts/memory-cli.js ui",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "sqlite3": "^6.0.1"
+  }
+}

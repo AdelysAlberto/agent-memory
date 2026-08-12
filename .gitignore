@@ -1,0 +1,38 @@
+# Node.js & Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Database & Agent Local State
+.agents/
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs & Temporary Files
+*.log
+logs/
+temp/
+tmp/
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs & Editors
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# Brain / Artifact Scratch Files
+artifacts/scratch/

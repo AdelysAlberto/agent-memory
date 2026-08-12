@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>agents-memory | Neural Memory Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="navbar">
+      <div class="logo">
+        <span class="brain-icon">🧠</span>
+        <span class="logo-text">agents<span class="highlight">-memory</span></span>
+        <span class="badge">v1.0.0</span>
+      </div>
+      <div class="navbar-actions">
+        <button id="btn-new-memory" class="btn btn-primary">
+          <span>+</span> Nueva Memoria
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Dashboard Grid -->
+    <main class="main-content">
+      <!-- Metrics Banner -->
+      <section class="metrics-grid">
+        <div class="metric-card glass">
+          <div class="metric-icon">💾</div>
+          <div class="metric-data">
+            <span class="metric-value" id="stat-memories">0</span>
+            <span class="metric-label">Memorias Almacenadas</span>
+          </div>
+        </div>
+        <div class="metric-card glass">
+          <div class="metric-icon">📁</div>
+          <div class="metric-data">
+            <span class="metric-value" id="stat-projects">0</span>
+            <span class="metric-label">Proyectos Registrados</span>
+          </div>
+        </div>
+        <div class="metric-card glass">
+          <div class="metric-icon">⚡</div>
+          <div class="metric-data">
+            <span class="metric-value" id="stat-tokens">~0</span>
+            <span class="metric-label">Tokens Ahorrados (Est.)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Controls & Filters Bar -->
+      <section class="controls-bar glass">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" placeholder="Buscar memorias, tags, conceptos o títulos..." autocomplete="off">
+        </div>
+        <div class="filter-box">
+          <label for="project-select">Proyecto:</label>
+          <select id="project-select">
+            <option value="">Todos los Proyectos</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Memory List Feed -->
+      <section class="memories-feed">
+        <div class="section-title">
+          <h2>Firmas Semánticas Recientes</h2>
+          <span id="feed-count" class="feed-count">0 elementos</span>
+        </div>
+        <div id="memories-list" class="memories-grid">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal for Creating New Memory -->
+  <div id="modal-container" class="modal-overlay hidden">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h3>✨ Registrar Nueva Firma de Memoria</h3>
+        <button id="modal-close" class="btn-close">&times;</button>
+      </div>
+      <form id="memory-form">
+        <div class="form-group">
+          <label for="form-project">Proyecto *</label>
+          <input type="text" id="form-project" required placeholder="ej. mi-proyecto-web">
+        </div>
+        <div class="form-group">
+          <label for="form-title">Título / Hito *</label>
+          <input type="text" id="form-title" required placeholder="ej. Middleware de Autenticación Implementado">
+        </div>
+        <div class="form-group">
+          <div class="label-with-hint">
+            <label for="form-summary">Resumen Sintético (Firma) *</label>
+            <span class="hint">Manténlo denso para ahorrar tokens</span>
+          </div>
+          <textarea id="form-summary" rows="4" required placeholder="Se implementó JWT con RSA256 en src/auth.js. Endpoints actualizados: /login, /refresh..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="form-category">Categoría</label>
+            <select id="form-category">
+              <option value="general">General</option>
+              <option value="architecture">Arquitectura</option>
+              <option value="auth">Autenticación</option>
+              <option value="database">Base de Datos</option>
+              <option value="testing">Pruebas / QA</option>
+              <option value="refactor">Refactorización</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="form-tags">Etiquetas (Tags)</label>
+            <input type="text" id="form-tags" placeholder="ej. jwt, security, auth (separadas por coma)">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="form-cancel" class="btn btn-secondary">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Memoria</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
