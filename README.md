@@ -29,7 +29,7 @@ chmod +x install.sh
 ```bash
 node scripts/memory-cli.js init
 ```
-*Crea la base de datos centralizada en `~/.agents-memory/memory.db`.*
+*Crea la base de datos centralizada en `~/.agent-memory/memory.db`.*
 
 ### 2. Guardar una Memoria / Firma de Decisión
 ```bash
@@ -76,7 +76,7 @@ La skill global ha sido registrada automáticamente en:
 
 ## 🛠️ Arquitectura Técnica
 
-- **Motor de BD**: SQLite3 Embebido (almacenado centralizadamente en `~/.agents-memory/memory.db`).
+- **Motor de BD**: SQLite3 Embebido (almacenado centralizadamente en `~/.agent-memory/memory.db`).
 - **CLI Runtime**: Node.js >= 18.
 - **Formato de Respuesta**: JSON denso / Formato legible en terminal.
 - **Cross-Platform**: Funciona nativamente en macOS, Linux y Windows.

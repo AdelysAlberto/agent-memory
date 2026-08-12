@@ -5,7 +5,7 @@ description: Autonomous local memory system to query and store synthetic semanti
 
 # 🧠 Agent Memory Skill (Autonomous Memory System)
 
-This skill enables AI agents to **query, register, and manage synthetic semantic signatures** in a centralized local SQLite database (`~/.agents-memory/memory.db`).
+This skill enables AI agents to **query, register, and manage synthetic semantic signatures** in a centralized local SQLite database (`~/.agent-memory/memory.db`).
 
 Its primary objective is to maintain architectural consistency across chat sessions while drastically reducing input token consumption by preventing repetitive reading of source code and documentation.
 
