@@ -45,18 +45,24 @@ node "$MEMORY_REPO_DIR/scripts/memory-cli.js" init
 # Permisos
 chmod +x "$MEMORY_REPO_DIR/scripts/memory-cli.js"
 
+# Si el script se invoca mediante pipe (curl | sh), redirigimos la entrada al TTY de la terminal para permitir la interacción
+if [ ! -t 0 ] && [ -e /dev/tty ]; then
+    exec < /dev/tty
+fi
+
 echo ""
 echo "🤖 Selecciona el entorno o Harness de IA que utilizas:"
 echo "1) Gemini Antigravity (~/.gemini/config/skills/)"
-echo "2) GitHub Copilot (~/.copilot/skills/ & instructions)"
-echo "3) OpenCode / OpenHands (~/.opencode/skills/)"
-echo "4) Hermes CLI (~/.hermes/skills/)"
-echo "5) Instalar en TODOS los entornos detectados"
-echo "6) Omitir instalación automática de Skill"
+echo "2) OpenCode (~/.config/opencode/skills/ & ~/.agents/skills/)"
+echo "3) Agentes Estándar / Agentic CLI (~/.agents/skills/)"
+echo "4) GitHub Copilot (~/.copilot/skills/)"
+echo "5) Hermes CLI (~/.hermes/skills/)"
+echo "6) Instalar en TODOS los entornos detectados"
+echo "7) Omitir instalación de Skill"
 echo ""
 
-read -p "Ingresa tu opción (1-6) [por defecto: 5]: " HARNESS_CHOICE
-HARNESS_CHOICE=${HARNESS_CHOICE:-5}
+read -p "Ingresa tu opción (1-7) [por defecto: 6]: " HARNESS_CHOICE
+HARNESS_CHOICE=${HARNESS_CHOICE:-6}
 
 install_antigravity() {
     GEMINI_SKILLS="$HOME_DIR/.gemini/config/skills"
@@ -65,18 +71,27 @@ install_antigravity() {
     cp -f "$SKILL_SOURCE" "$GEMINI_SKILLS/agent-memory/SKILL.md"
 }
 
+install_opencode() {
+    OPENCODE_SKILLS_1="$HOME_DIR/.config/opencode/skills"
+    OPENCODE_SKILLS_2="$HOME_DIR/.agents/skills"
+    echo "  -> Instalando Skill en OpenCode: $OPENCODE_SKILLS_1 y $OPENCODE_SKILLS_2"
+    mkdir -p "$OPENCODE_SKILLS_1/agent-memory" "$OPENCODE_SKILLS_2/agent-memory"
+    cp -f "$SKILL_SOURCE" "$OPENCODE_SKILLS_1/agent-memory/SKILL.md"
+    cp -f "$SKILL_SOURCE" "$OPENCODE_SKILLS_2/agent-memory/SKILL.md"
+}
+
+install_agents_std() {
+    STD_SKILLS="$HOME_DIR/.agents/skills"
+    echo "  -> Instalando Skill en Agentes Estándar: $STD_SKILLS"
+    mkdir -p "$STD_SKILLS/agent-memory"
+    cp -f "$SKILL_SOURCE" "$STD_SKILLS/agent-memory/SKILL.md"
+}
+
 install_copilot() {
     COPILOT_SKILLS="$HOME_DIR/.copilot/skills"
     echo "  -> Instalando Skill en GitHub Copilot: $COPILOT_SKILLS"
     mkdir -p "$COPILOT_SKILLS/agent-memory"
     cp -f "$SKILL_SOURCE" "$COPILOT_SKILLS/agent-memory/SKILL.md"
-}
-
-install_opencode() {
-    OPENCODE_SKILLS="$HOME_DIR/.opencode/skills"
-    echo "  -> Instalando Skill en OpenCode / OpenHands: $OPENCODE_SKILLS"
-    mkdir -p "$OPENCODE_SKILLS/agent-memory"
-    cp -f "$SKILL_SOURCE" "$OPENCODE_SKILLS/agent-memory/SKILL.md"
 }
 
 install_hermes() {
@@ -91,29 +106,34 @@ case $HARNESS_CHOICE in
         install_antigravity
         ;;
     2)
-        install_copilot
+        install_opencode
         ;;
     3)
-        install_opencode
+        install_agents_std
         ;;
     4)
-        install_hermes
+        install_copilot
         ;;
     5)
-        echo "🚀 Registrando en todos los arneses de IA..."
-        install_antigravity
-        install_copilot
-        install_opencode
         install_hermes
         ;;
     6)
+        echo "🚀 Registrando en todos los arneses de IA..."
+        install_antigravity
+        install_opencode
+        install_agents_std
+        install_copilot
+        install_hermes
+        ;;
+    7)
         echo "⏭️ Instalación de skill omitida."
         ;;
     *)
         echo "Opción no válida. Instalando en todos los entornos por defecto..."
         install_antigravity
-        install_copilot
         install_opencode
+        install_agents_std
+        install_copilot
         install_hermes
         ;;
 esac
