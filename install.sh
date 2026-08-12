@@ -56,10 +56,13 @@ echo "6) Instalar en TODOS los entornos detectados"
 echo "7) Omitir instalación de Skill"
 echo ""
 
-if [ -e /dev/tty ]; then
-    read -p "Ingresa tu opción (1-7) [por defecto: 6]: " HARNESS_CHOICE < /dev/tty
-else
+if [ -t 0 ]; then
     read -p "Ingresa tu opción (1-7) [por defecto: 6]: " HARNESS_CHOICE
+elif [ -c /dev/tty ] && read -p "Ingresa tu opción (1-7) [por defecto: 6]: " HARNESS_CHOICE < /dev/tty 2>/dev/null; then
+    :
+else
+    echo "ℹ️ Entorno no interactivo detectado. Seleccionando opción 6 (TODOS los entornos por defecto)..."
+    HARNESS_CHOICE=6
 fi
 HARNESS_CHOICE=${HARNESS_CHOICE:-6}
 
