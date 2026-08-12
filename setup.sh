@@ -21,6 +21,7 @@ if [ ! -f "package.json" ]; then
     if [ -d "$TARGET_DIR/.git" ]; then
         git -C "$TARGET_DIR" pull --quiet
     else
+        rm -rf "$TARGET_DIR"
         git clone --quiet https://github.com/AdelysAlberto/agent-memory.git "$TARGET_DIR"
     fi
     MEMORY_REPO_DIR="$TARGET_DIR"
@@ -28,12 +29,13 @@ else
     MEMORY_REPO_DIR="$(pwd)"
 fi
 
+cd "$MEMORY_REPO_DIR"
 SKILL_SOURCE="$MEMORY_REPO_DIR/SKILL.md"
 
 # Instalar dependencias si no existen
 if [ ! -d "$MEMORY_REPO_DIR/node_modules" ]; then
     echo "📦 Instalando dependencias de npm..."
-    npm install --quiet --prefix "$MEMORY_REPO_DIR"
+    npm install --quiet
 fi
 
 # Inicializar BD
