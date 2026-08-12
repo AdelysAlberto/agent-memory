@@ -56,15 +56,18 @@ echo "6) Instalar en TODOS los entornos detectados"
 echo "7) Omitir instalación de Skill"
 echo ""
 
+HARNESS_CHOICE=""
 if [ -t 0 ]; then
-    read -p "Ingresa tu opción (1-7) [por defecto: 6]: " HARNESS_CHOICE
-elif [ -c /dev/tty ] && read -p "Ingresa tu opción (1-7) [por defecto: 6]: " HARNESS_CHOICE < /dev/tty 2>/dev/null; then
-    :
+    read -p "Ingresa tu opción (1-7) [por defecto: 6]: " HARNESS_CHOICE || true
 else
-    echo "ℹ️ Entorno no interactivo detectado. Seleccionando opción 6 (TODOS los entornos por defecto)..."
+    # Intento seguro sin que sh detenga la ejecución por 'set -e'
+    HARNESS_CHOICE=$( (read -p "Ingresa tu opción (1-7) [por defecto: 6]: " choice < /dev/tty && echo "$choice") 2>/dev/null || echo "" )
+fi
+
+if [ -z "$HARNESS_CHOICE" ]; then
+    echo "ℹ️ Modo no interactivo o pipe detectado. Seleccionando opción 6 (TODOS los entornos por defecto)..."
     HARNESS_CHOICE=6
 fi
-HARNESS_CHOICE=${HARNESS_CHOICE:-6}
 
 install_antigravity() {
     GEMINI_SKILLS="$HOME_DIR/.gemini/config/skills"
