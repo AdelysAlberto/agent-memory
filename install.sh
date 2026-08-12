@@ -142,6 +142,14 @@ case $HARNESS_CHOICE in
         ;;
 esac
 
+# Enlace global binario
 echo ""
-echo "✅ [agents-memory] ¡Instalación completada con éxito!"
-echo "💡 Puedes lanzar el Dashboard visual con: node scripts/memory-cli.js ui"
+echo "🔗 Registrando comando binario global 'agent-memory'..."
+npm link --quiet 2>/dev/null || npm link --location=global --quiet 2>/dev/null || true
+
+echo ""
+echo "✅ [agent-memory] ¡Instalación completada con éxito!"
+echo "💡 Ahora puedes ejecutar desde cualquier terminal:"
+echo "   - agent-memory search --query \"...\""
+echo "   - agent-memory ui        (Abre el Dashboard visual)"
+echo "   - agent-memory update    (Actualiza a la última versión)"

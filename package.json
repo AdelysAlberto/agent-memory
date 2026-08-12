@@ -2,7 +2,10 @@
   "name": "agents-memory",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "scripts/memory-cli.js",
+  "bin": {
+    "agent-memory": "scripts/memory-cli.js"
+  },
   "scripts": {
     "start": "node scripts/server.js",
     "ui": "node scripts/memory-cli.js ui",

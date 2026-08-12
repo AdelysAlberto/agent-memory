@@ -23,18 +23,19 @@ chmod +x install.sh
 
 ---
 
-## 🚀 Uso Rápido (CLI)
+## 🚀 Uso Rápido (CLI Global)
+
+Una vez instalado, el comando `agent-memory` está disponible globalmente en cualquier terminal:
 
 ### 1. Inicializar la Base de Datos Global
 ```bash
-node scripts/memory-cli.js init
+agent-memory init
 ```
 *Crea la base de datos centralizada en `~/.agent-memory/memory.db`.*
 
 ### 2. Guardar una Memoria / Firma de Decisión
 ```bash
-node scripts/memory-cli.js save \
-  --project "mi-proyecto" \
+agent-memory save \
   --title "Autenticación JWT implementada" \
   --summary "Se configuró el middleware de JWT usando RSA256 en src/auth.js" \
   --category "auth" \
@@ -43,18 +44,20 @@ node scripts/memory-cli.js save \
 
 ### 3. Consultar / Buscar Memorias Relevantes
 ```bash
-node scripts/memory-cli.js search \
-  --project "mi-proyecto" \
-  --query "JWT"
+agent-memory search --query "JWT"
 ```
 
 ### 4. Abrir el Dashboard Visual (UI)
 ```bash
-node scripts/memory-cli.js ui
-# o
-npm run ui
+agent-memory ui
 ```
-*Inicia un servidor local en `http://localhost:3000` con un Dashboard visual moderno (dark mode / glassmorphism) para explorar, buscar, crear y eliminar memorias sintetizadas.*
+*Inicia un servidor local en `http://localhost:3000` con un Dashboard visual moderno (dark mode / glassmorphism).*
+
+### 5. Actualizar Sistema & Skills a la Última Versión
+```bash
+agent-memory update
+```
+*Descarga los últimos cambios desde Git, actualiza dependencias y re-sincroniza las skills en tus entornos de IA.*
 
 ---
 

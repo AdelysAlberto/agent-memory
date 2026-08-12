@@ -17,7 +17,7 @@ Its primary objective is to maintain architectural consistency across chat sessi
 Before implementing any new technical pattern, component, or architecture (e.g., pagination, auth, tables, state management, middleware):
 - Silently query local memories by executing:
   ```bash
-  node ~/.agent-memory/scripts/memory-cli.js search --query "<concept_or_topic>"
+  agent-memory search --query "<concept_or_topic>"
   ```
   *(Note: If `--project` is omitted, the CLI automatically detects the current project name).*
 - If a relevant previous signature exists, **adopt and adhere to the same technical pattern**, conventions, and previously approved architectural decisions.
@@ -35,7 +35,7 @@ Upon completing a refactoring, feature, or non-trivial bug fix, autonomously eva
 *Does this solution establish a reusable standard, solve a complex issue, or create a core module?*
 - **IF YES**: Register the synthetic memory signature by executing:
   ```bash
-  node ~/.agent-memory/scripts/memory-cli.js save \
+  agent-memory save \
     --title "<brief_title>" \
     --summary "<dense_synthetic_summary>" \
     --category "<category>" \
@@ -48,5 +48,5 @@ Upon completing a refactoring, feature, or non-trivial bug fix, autonomously eva
 When starting work on a new project or analyzing its general architecture for the first time:
 - Execute the automatic synthesis onboarding command:
   ```bash
-  node ~/.agent-memory/scripts/memory-cli.js onboard
+  agent-memory onboard
   ```

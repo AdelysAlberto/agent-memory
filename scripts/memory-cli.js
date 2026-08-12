@@ -145,20 +145,50 @@ async function main() {
         const { startServer } = require('./server');
         startServer(true);
       } catch (err) {
-        console.error('[agents-memory] Error iniciando la interfaz de usuario:', err.message);
+        console.error('[agent-memory] Error iniciando la interfaz de usuario:', err.message);
+        process.exit(1);
+      }
+      break;
+
+    case 'update':
+      try {
+        const { execSync } = require('child_process');
+        const repoDir = path.join(__dirname, '..');
+        console.log('🔄 Actualizando agent-memory desde repositorio remoto...');
+        
+        const gitOutput = execSync('git pull --quiet', { cwd: repoDir, encoding: 'utf8' });
+        console.log('📦 Actualizando dependencias...');
+        execSync('npm install --quiet', { cwd: repoDir, encoding: 'utf8' });
+        
+        await initDb();
+        console.log('🗄️ Base de datos verificada y migrada si aplicaba.');
+        
+        // Re-sincronizar skill en instalados
+        const installScript = path.join(repoDir, 'install.sh');
+        if (fs.existsSync(installScript)) {
+          console.log('🤖 Re-sincronizando skills de agentes...');
+          execSync(`bash "${installScript}" --update-silent`, { cwd: repoDir, encoding: 'utf8' });
+        }
+        
+        console.log('✅ ¡agent-memory ha sido actualizado con éxito a la última versión!');
+      } catch (err) {
+        console.error('[agent-memory] Error durante la actualización:', err.message);
         process.exit(1);
       }
       break;
 
     default:
       console.log(`
-Uso de agents-memory CLI (Proyecto Autodetectado: ${project}):
-  node scripts/memory-cli.js init
-  node scripts/memory-cli.js onboard [--project "..."]
-  node scripts/memory-cli.js save --title "..." --summary "..." [--project "..."] [--category "..."] [--tags "..."]
-  node scripts/memory-cli.js search --query "..." [--project "..."]
-  node scripts/memory-cli.js list [--project "..."]
-  node scripts/memory-cli.js ui
+🧠 agent-memory CLI v1.0.0 (Proyecto Autodetectado: ${project})
+
+Comandos Disponibles:
+  agent-memory search --query "..." [--project "..."]   Buscar memorias por término o tag
+  agent-memory save --title "..." --summary "..."       Guardar una firma semántica
+  agent-memory onboard                                  Sintetizar onboarding del proyecto actual
+  agent-memory list [--project "..."]                   Listar últimas memorias registradas
+  agent-memory ui                                       Abrir Dashboard visual en navegador
+  agent-memory update                                   Actualizar a la última versión desde Git
+  agent-memory init                                     Inicializar esquema SQLite
       `);
       break;
   }
