@@ -25,11 +25,11 @@ chmod +x install.sh
 
 ## 🚀 Uso Rápido (CLI)
 
-### 1. Inicializar la Base de Datos
+### 1. Inicializar la Base de Datos Global
 ```bash
 node scripts/memory-cli.js init
 ```
-*Crea la base de datos local en `.agents/memory.db`.*
+*Crea la base de datos centralizada en `~/.agents-memory/memory.db`.*
 
 ### 2. Guardar una Memoria / Firma de Decisión
 ```bash
