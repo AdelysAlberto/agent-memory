@@ -76,10 +76,16 @@ La skill global ha sido registrada automáticamente en:
 
 ## 🛠️ Arquitectura Técnica
 
-- **Motor de BD**: SQLite3 Embebido (almacenado en `.agents/memory.db`).
+- **Motor de BD**: SQLite3 Embebido (almacenado centralizadamente en `~/.agents-memory/memory.db`).
 - **CLI Runtime**: Node.js >= 18.
-- **Formato de Respuesta**: JSON denso / Formato legibe en terminal.
+- **Formato de Respuesta**: JSON denso / Formato legible en terminal.
 - **Cross-Platform**: Funciona nativamente en macOS, Linux y Windows.
+
+---
+
+## 👨‍💻 Creador & Autor
+
+Desarrollado y mantenido por **Adelys Alberto** ([@AdelysAlberto](https://github.com/AdelysAlberto)).
 
 ---
 
