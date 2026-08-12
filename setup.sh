@@ -59,10 +59,12 @@ echo ""
 HARNESS_CHOICE=""
 if [ -t 0 ]; then
     read -p "Ingresa tu opción (1-7) [por defecto: 6]: " HARNESS_CHOICE || true
+elif [ -r /dev/tty ]; then
+    read -p "Ingresa tu opción (1-7) [por defecto: 6]: " HARNESS_CHOICE < /dev/tty 2>/dev/null || true
 fi
 
 if [ -z "$HARNESS_CHOICE" ]; then
-    echo "ℹ️ Modo no interactivo o pipe detectado. Seleccionando opción 6 (TODOS los entornos por defecto)..."
+    echo "ℹ️ Modo no interactivo detectado. Seleccionando opción 6 (TODOS los entornos por defecto)..."
     HARNESS_CHOICE=6
 fi
 
