@@ -4,6 +4,7 @@ const path = require('path');
 const { exec } = require('child_process');
 const { initDb, saveMemory, searchMemories, listMemories, deleteMemory, getProjects, getStats } = require('./db');
 
+const HOST = process.env.HOST || '127.0.0.1';
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
@@ -35,15 +36,44 @@ function sendJson(res, data, statusCode = 200) {
   res.end(JSON.stringify(data));
 }
 
+function isAllowedOrigin(origin) {
+  if (!origin) return true; // Mismo origen o peticiones locales directas
+  try {
+    const parsed = new URL(origin);
+    return parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+  } catch (e) {
+    return false;
+  }
+}
+
 const server = http.createServer(async (req, res) => {
-  const urlObj = new URL(req.url, `http://${req.headers.host}`);
+  const hostHeader = req.headers.host || '';
+  const hostName = hostHeader.split(':')[0];
+  
+  // Protección contra DNS Rebinding y Host Header Injection
+  if (hostName && hostName !== 'localhost' && hostName !== '127.0.0.1' && HOST === '127.0.0.1') {
+    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Acceso denegado: Host no autorizado.');
+    return;
+  }
+
+  const urlObj = new URL(req.url, `http://${hostHeader || '127.0.0.1'}`);
   const pathname = urlObj.pathname;
   const method = req.method;
 
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // Restricción estricta de CORS
+  const origin = req.headers.origin;
+  if (isAllowedOrigin(origin)) {
+    if (origin) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  } else if (origin) {
+    res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ error: 'Origen CORS no autorizado' }));
+    return;
+  }
 
   if (method === 'OPTIONS') {
     res.writeHead(204);
@@ -121,8 +151,8 @@ const server = http.createServer(async (req, res) => {
 });
 
 function startServer(openBrowser = true) {
-  server.listen(PORT, () => {
-    const url = `http://localhost:${PORT}`;
+  server.listen(PORT, HOST, () => {
+    const url = `http://${HOST}:${PORT}`;
     console.log(`\n🧠 [agents-memory] Dashboard iniciado con éxito en: ${url}`);
     console.log(`Presiona Ctrl+C para detener el servidor.\n`);
     
@@ -138,3 +168,4 @@ if (require.main === module) {
 }
 
 module.exports = { startServer };
+

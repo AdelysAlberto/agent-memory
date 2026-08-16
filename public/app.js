@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const tagsList = mem.tags ? mem.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
-      const tagsHtml = tagsList.map(tag => `<span class="tag-chip">#${tag}</span>`).join('');
+      const tagsHtml = tagsList.map(tag => `<span class="tag-chip">#${escapeHtml(tag)}</span>`).join('');
 
       card.innerHTML = `
         <div>

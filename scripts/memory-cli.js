@@ -154,9 +154,22 @@ async function main() {
       try {
         const { execSync } = require('child_process');
         const repoDir = path.join(__dirname, '..');
-        console.log('🔄 Actualizando agent-memory desde repositorio remoto...');
+        console.log('🔄 Verificando actualizaciones en el repositorio remoto...');
         
-        const gitOutput = execSync('git pull --quiet', { cwd: repoDir, encoding: 'utf8' });
+        execSync('git fetch --tags --quiet', { cwd: repoDir, encoding: 'utf8' });
+        let latestTag = '';
+        try {
+          latestTag = execSync('git tag -l --sort=-v:refname', { cwd: repoDir, encoding: 'utf8' }).trim().split('\n')[0];
+        } catch (e) {}
+
+        if (latestTag) {
+          console.log(`📌 Actualizando a la versión estable: ${latestTag}`);
+          execSync(`git checkout ${latestTag} --quiet`, { cwd: repoDir, encoding: 'utf8' });
+        } else {
+          console.log('🔄 Obteniendo cambios de la rama remota...');
+          execSync('git pull --quiet', { cwd: repoDir, encoding: 'utf8' });
+        }
+
         console.log('📦 Actualizando dependencias...');
         execSync('npm install --quiet', { cwd: repoDir, encoding: 'utf8' });
         
@@ -170,7 +183,7 @@ async function main() {
           execSync(`bash "${installScript}" --update-silent`, { cwd: repoDir, encoding: 'utf8' });
         }
         
-        console.log('✅ ¡agent-memory ha sido actualizado con éxito a la última versión!');
+        console.log('✅ ¡agent-memory ha sido actualizado con éxito!');
       } catch (err) {
         console.error('[agent-memory] Error durante la actualización:', err.message);
         process.exit(1);

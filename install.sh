@@ -19,10 +19,22 @@ TARGET_DIR="$HOME_DIR/.agent-memory"
 if [ ! -f "package.json" ]; then
     echo "📥 Clonando / actualizando repositorio en $TARGET_DIR..."
     if [ -d "$TARGET_DIR/.git" ]; then
-        git -C "$TARGET_DIR" pull --quiet
+        git -C "$TARGET_DIR" fetch --tags --quiet
+        LATEST_TAG=$(git -C "$TARGET_DIR" tag -l --sort=-v:refname | head -n 1)
+        if [ -n "$LATEST_TAG" ]; then
+            echo "📌 Haciendo checkout a la versión estable: $LATEST_TAG"
+            git -C "$TARGET_DIR" checkout "$LATEST_TAG" --quiet
+        else
+            git -C "$TARGET_DIR" pull --quiet
+        fi
     else
         rm -rf "$TARGET_DIR"
         git clone --quiet https://github.com/AdelysAlberto/agent-memory.git "$TARGET_DIR"
+        LATEST_TAG=$(git -C "$TARGET_DIR" tag -l --sort=-v:refname | head -n 1)
+        if [ -n "$LATEST_TAG" ]; then
+            echo "📌 Haciendo checkout a la versión estable: $LATEST_TAG"
+            git -C "$TARGET_DIR" checkout "$LATEST_TAG" --quiet
+        fi
     fi
     MEMORY_REPO_DIR="$TARGET_DIR"
 else
