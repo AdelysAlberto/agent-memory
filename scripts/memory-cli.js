@@ -190,9 +190,56 @@ async function main() {
       }
       break;
 
+    case 'uninstall':
+      try {
+        const { execSync } = require('child_process');
+        const repoDir = path.join(__dirname, '..');
+        const homeDir = process.env.HOME || process.env.USERPROFILE;
+        const purge = args.includes('--purge');
+
+        console.log('🗑️ Desinstalando agent-memory y removiendo skills de IA...');
+
+        const skillPaths = [
+          path.join(homeDir, '.gemini', 'config', 'skills', 'agent-memory'),
+          path.join(homeDir, '.cursor', 'skills', 'agent-memory'),
+          path.join(homeDir, '.config', 'opencode', 'skills', 'agent-memory'),
+          path.join(homeDir, '.agents', 'skills', 'agent-memory'),
+          path.join(homeDir, '.copilot', 'skills', 'agent-memory'),
+          path.join(homeDir, '.hermes', 'skills', 'agent-memory')
+        ];
+
+        skillPaths.forEach(sp => {
+          if (fs.existsSync(sp)) {
+            fs.rmSync(sp, { recursive: true, force: true });
+            console.log(`  -> Removido: ${sp}`);
+          }
+        });
+
+        console.log('🔗 Desvinculando ejecutable binario npm...');
+        try {
+          execSync('npm unlink --quiet 2>/dev/null || npm unlink --location=global --quiet 2>/dev/null', { cwd: repoDir, stdio: 'ignore' });
+        } catch (e) {}
+
+        const globalDataDir = path.join(homeDir, '.agent-memory');
+        if (fs.existsSync(globalDataDir)) {
+          if (purge) {
+            fs.rmSync(globalDataDir, { recursive: true, force: true });
+            console.log(`🧹 Datos y base de datos SQLite eliminados (${globalDataDir}).`);
+          } else {
+            console.log(`ℹ️ La base de datos en ${globalDataDir} se ha conservado (usa 'agent-memory uninstall --purge' para borrarla).`);
+          }
+        }
+
+        console.log('✅ ¡agent-memory ha sido desinstalado exitosamente!');
+      } catch (err) {
+        console.error('[agent-memory] Error durante la desinstalación:', err.message);
+        process.exit(1);
+      }
+      break;
+
     default:
       console.log(`
-🧠 agent-memory CLI v1.0.0 (Proyecto Autodetectado: ${project})
+🧠 agent-memory CLI (Proyecto Autodetectado: ${project})
 
 Comandos Disponibles:
   agent-memory search --query "..." [--project "..."]   Buscar memorias por término o tag
@@ -201,6 +248,7 @@ Comandos Disponibles:
   agent-memory list [--project "..."]                   Listar últimas memorias registradas
   agent-memory ui                                       Abrir Dashboard visual en navegador
   agent-memory update                                   Actualizar a la última versión desde Git
+  agent-memory uninstall [--purge]                      Desinstalar habilidades y desvincular binario
   agent-memory init                                     Inicializar esquema SQLite
       `);
       break;
