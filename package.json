@@ -1,6 +1,6 @@
 {
   "name": "agents-memory",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "scripts/memory-cli.js",
   "bin": {
@@ -9,8 +9,8 @@
   "scripts": {
     "start": "node scripts/server.js",
     "ui": "node scripts/memory-cli.js ui",
-    "release-patch": "node scripts/release.js patch",
-    "release-minor": "node scripts/release.js minor",
+    "release:patch": "node scripts/release.js patch",
+    "release:minor": "node scripts/release.js minor",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
