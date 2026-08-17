@@ -173,7 +173,7 @@ func promptAndInstallSkills(autoAll bool) {
 		choice = "8"
 	} else {
 		fmt.Println("\n🤖 Selecciona el entorno o Harness de IA que utilizas:")
-		fmt.Println("1) Proyecto actual (.agents/skills/ & .cursor/skills/)")
+		fmt.Println("1) Proyecto actual (.agents/skills/)")
 		fmt.Println("2) Gemini Antigravity (~/.gemini/config/skills/)")
 		fmt.Println("3) Cursor IDE (~/.cursor/skills/)")
 		fmt.Println("4) Claude Code / Desktop (~/.claude/skills/)")

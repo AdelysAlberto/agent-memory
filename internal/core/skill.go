@@ -68,8 +68,6 @@ func GetHarnessSkillPaths(homeDir string) map[string][]string {
 	return map[string][]string{
 		"local": {
 			filepath.Join(".agents", "skills"),
-			filepath.Join(".cursor", "skills"),
-			filepath.Join(".claude", "skills"),
 		},
 		"antigravity": {
 			filepath.Join(homeDir, ".gemini", "config", "skills"),
@@ -79,7 +77,6 @@ func GetHarnessSkillPaths(homeDir string) map[string][]string {
 		},
 		"claude": {
 			filepath.Join(homeDir, ".claude", "skills"),
-			filepath.Join(homeDir, ".config", "claude", "skills"),
 		},
 		"opencode": {
 			filepath.Join(homeDir, ".config", "opencode", "skills"),
