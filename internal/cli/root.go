@@ -53,6 +53,9 @@ func Execute(args []string) int {
 		return handleStats(cmdArgs)
 	case "ui":
 		return handleUI(cmdArgs)
+	case "skill", "skills":
+		promptAndInstallSkills(len(cmdArgs) > 0 && cmdArgs[0] == "--all")
+		return 0
 	case "uninstall":
 		return handleUninstall(cmdArgs)
 	case "version", "--version", "-v":
@@ -113,6 +116,8 @@ func getStorage(customPath string, forceGlobal bool) (*storage.Storage, error) {
 func handleInit(args []string) int {
 	fs := flag.NewFlagSet("init", flag.ExitOnError)
 	forceGlobal := fs.Bool("global", false, "Inicializa la base de datos global en ~/.cogni")
+	noSkills := fs.Bool("no-skills", false, "Omitir instalación de skills de IA")
+	allSkills := fs.Bool("all", false, "Instalar automáticamente en todos los arneses de IA")
 	_ = fs.Parse(args)
 
 	if *forceGlobal {
@@ -129,27 +134,122 @@ func handleInit(args []string) int {
 		}
 		s.Close()
 		fmt.Printf("✅ Cogni global inicializado en: %s\n", dbPath)
-		return 0
+	} else {
+		localDir := filepath.Join(".", ".cogni")
+		if err := os.MkdirAll(localDir, 0755); err != nil {
+			fmt.Fprintf(os.Stderr, "Error creando directorio .cogni: %v\n", err)
+			return 1
+		}
+
+		dbPath := filepath.Join(localDir, "memory.db")
+		s, err := storage.New(dbPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error inicializando base de datos local: %v\n", err)
+			return 1
+		}
+		s.Close()
+
+		fmt.Printf("✅ Cogni local inicializado en: %s\n", dbPath)
+		fmt.Printf("💡 Proyecto detectado: %s\n", core.DetectProjectName())
 	}
 
-	localDir := filepath.Join(".", ".cogni")
-	if err := os.MkdirAll(localDir, 0755); err != nil {
-		fmt.Fprintf(os.Stderr, "Error creando directorio .cogni: %v\n", err)
-		return 1
+	if !*noSkills {
+		promptAndInstallSkills(*allSkills)
 	}
 
-	dbPath := filepath.Join(localDir, "memory.db")
-	s, err := storage.New(dbPath)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error inicializando base de datos local: %v\n", err)
-		return 1
-	}
-	s.Close()
-
-	// Add .cogni/memory.db to .gitignore recommendation
-	fmt.Printf("✅ Cogni local inicializado en: %s\n", dbPath)
-	fmt.Printf("💡 Proyecto detectado: %s\n", core.DetectProjectName())
 	return 0
+}
+
+func promptAndInstallSkills(autoAll bool) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return
+	}
+
+	harnesses := core.GetHarnessSkillPaths(home)
+
+	choice := ""
+	if autoAll {
+		choice = "8"
+	} else {
+		fmt.Println("\n🤖 Selecciona el entorno o Harness de IA que utilizas:")
+		fmt.Println("1) Proyecto actual (.agents/skills/ & .cursor/skills/)")
+		fmt.Println("2) Gemini Antigravity (~/.gemini/config/skills/)")
+		fmt.Println("3) Cursor IDE (~/.cursor/skills/)")
+		fmt.Println("4) Claude Code / Desktop (~/.claude/skills/)")
+		fmt.Println("5) OpenCode (~/.config/opencode/skills/ & ~/.agents/skills/)")
+		fmt.Println("6) GitHub Copilot (~/.copilot/skills/)")
+		fmt.Println("7) Hermes CLI (~/.hermes/skills/)")
+		fmt.Println("8) Instalar en TODOS los entornos detectados (Recomendado)")
+		fmt.Println("9) Omitir instalación de Skill")
+		fmt.Print("\nIngresa tu opción (1-9) [por defecto: 8]: ")
+
+		var input string
+		_, _ = fmt.Scanln(&input)
+		choice = strings.TrimSpace(input)
+		if choice == "" {
+			choice = "8"
+		}
+	}
+
+	switch choice {
+	case "1":
+		for _, p := range harnesses["local"] {
+			_ = core.InstallSkill(p)
+			fmt.Printf("  -> Skill instalada en: %s\n", p)
+		}
+	case "2":
+		for _, p := range harnesses["antigravity"] {
+			_ = core.InstallSkill(p)
+			fmt.Printf("  -> Skill instalada en Antigravity: %s\n", p)
+		}
+	case "3":
+		for _, p := range harnesses["cursor"] {
+			_ = core.InstallSkill(p)
+			fmt.Printf("  -> Skill instalada en Cursor: %s\n", p)
+		}
+	case "4":
+		for _, p := range harnesses["claude"] {
+			_ = core.InstallSkill(p)
+			fmt.Printf("  -> Skill instalada en Claude: %s\n", p)
+		}
+	case "5":
+		for _, p := range harnesses["opencode"] {
+			_ = core.InstallSkill(p)
+			fmt.Printf("  -> Skill instalada en OpenCode: %s\n", p)
+		}
+	case "6":
+		for _, p := range harnesses["copilot"] {
+			_ = core.InstallSkill(p)
+			fmt.Printf("  -> Skill instalada en Copilot: %s\n", p)
+		}
+	case "7":
+		for _, p := range harnesses["hermes"] {
+			_ = core.InstallSkill(p)
+			fmt.Printf("  -> Skill instalada en Hermes: %s\n", p)
+		}
+	case "8":
+		fmt.Println("🚀 Registrando Skill de Cogni en todos los arneses de IA...")
+		for name, paths := range harnesses {
+			for _, p := range paths {
+				_ = core.InstallSkill(p)
+			}
+			fmt.Printf("  -> Configurado para: %s\n", name)
+		}
+	case "9":
+		fmt.Println("⏭️ Instalación de Skill omitida.")
+		return
+	default:
+		fmt.Println("🚀 Opción por defecto: Registrando en todos los arneses...")
+		for name, paths := range harnesses {
+			for _, p := range paths {
+				_ = core.InstallSkill(p)
+			}
+			fmt.Printf("  -> Configurado para: %s\n", name)
+		}
+	}
+
+	fmt.Println("✨ Skills de Cogni configuradas y listas para usar con tus Agentes de IA.")
 }
 
 func handleSave(args []string) int {
