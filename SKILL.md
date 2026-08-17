@@ -25,14 +25,21 @@ Its primary objective is to maintain architectural consistency across chat sessi
 - **MANDATORY CHAT NOTIFICATION ON RETRIEVAL**: When retrieved memories influence your response, append a 1-line confirmation:
   `🧠 **Memoria Recuperada**: [<project_name>] "<retrieved_title_or_topic>" (Tags: #tag1, #tag2)`
 
-### 2. When to Save (Mandatory Save Triggers)
-Call `cogni save` IMMEDIATELY after completing any of the following actions:
-- **Bugfix**: Resolution of a non-trivial error or bug (`--category bugfix`).
+### 2. When to Save & High-Signal Threshold (Mandatory Triggers)
+**GOLDEN RULE**: Call `cogni save` ONLY if the answer is YES to: *If this memory signature does not exist in the future, will an agent waste time investigating, break an architecture, or make a mistake?*
+
+**DO NOT SAVE (Noise / Skip)**:
+- ❌ Trivial metadata tasks (creating/modifying `LICENSE`, `.gitignore`, `.prettierrc`, cosmetic assets).
+- ❌ Typo fixes, code formatting (`fmt`, `lint`), or minor documentation polishing.
+- ❌ Self-evident information easily discovered by reading the first few lines of a file.
+
+**HIGH-SIGNAL EVENTS (Must Save)**:
+- **Bugfix**: Resolution of a non-trivial error with a non-obvious root cause (`--category bugfix`).
 - **Architecture / Decision**: Choice of libraries, data models, or system structures (`--category architecture` or `--category decision`).
-- **Discovery**: Non-obvious finding about system/codebase behavior (`--category discovery`).
-- **Config**: Environment setup, tooling, or script configuration (`--category config`).
+- **Discovery**: Non-obvious technical finding or gotcha about system/codebase behavior (`--category discovery`).
+- **Config**: Non-trivial environment setup, tooling, or script configuration (`--category config`).
 - **Pattern**: Established naming convention, file structure, or technical standard (`--category pattern`).
-- **Preference**: User preference or constraint learned during the session (`--category preference`).
+- **Preference**: User preference or technical constraint learned during the session (`--category preference`).
 
 ### 3. Synthetic Summary Format (`--summary`)
 To maximize token savings and preserve high information density, every `--summary` MUST follow this structured format:
