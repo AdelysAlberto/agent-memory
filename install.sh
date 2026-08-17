@@ -10,29 +10,42 @@ echo "========================================================"
 HOME_DIR="$HOME"
 TARGET_DIR="$HOME_DIR/.cogni"
 BIN_INSTALL_DIR="$HOME_DIR/.local/bin"
+SRC_CACHE_DIR="$HOME_DIR/.cogni-src"
 
 mkdir -p "$TARGET_DIR"
 mkdir -p "$BIN_INSTALL_DIR"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Determinar si estamos dentro del repositorio clonado o ejecutando vía curl
+if [ -f "go.mod" ] && grep -q "github.com/AdelysAlberto/cogni" go.mod 2>/dev/null; then
+    REPO_DIR="$(pwd)"
+else
+    echo "📥 Descargando código fuente de Cogni..."
+    if [ -d "$SRC_CACHE_DIR/.git" ]; then
+        git -C "$SRC_CACHE_DIR" fetch --tags --quiet
+        git -C "$SRC_CACHE_DIR" reset --hard --quiet origin/main
+    else
+        rm -rf "$SRC_CACHE_DIR"
+        git clone --quiet https://github.com/AdelysAlberto/agent-memory.git "$SRC_CACHE_DIR"
+    fi
+    REPO_DIR="$SRC_CACHE_DIR"
+fi
 
 # Compilación / Instalación del binario Go
 if command -v go &> /dev/null; then
     echo "🔨 Compilando binario de Cogni en Go..."
-    cd "$SCRIPT_DIR"
-    go build -ldflags="-s -w" -o "$BIN_INSTALL_DIR/cogni" ./cmd/cogni
+    (cd "$REPO_DIR" && go build -ldflags="-s -w" -o "$BIN_INSTALL_DIR/cogni" ./cmd/cogni)
     chmod +x "$BIN_INSTALL_DIR/cogni"
     echo "✅ Binario instalado en $BIN_INSTALL_DIR/cogni"
-elif [ -f "$SCRIPT_DIR/bin/cogni" ]; then
+elif [ -f "$REPO_DIR/bin/cogni" ]; then
     echo "📦 Copiando binario precompilado..."
-    cp "$SCRIPT_DIR/bin/cogni" "$BIN_INSTALL_DIR/cogni"
+    cp "$REPO_DIR/bin/cogni" "$BIN_INSTALL_DIR/cogni"
     chmod +x "$BIN_INSTALL_DIR/cogni"
 else
-    echo "❌ Error: Se requiere Go instalado para compilar o un binario precompilado."
+    echo "❌ Error: Se requiere Go (golang >= 1.22) instalado para compilar Cogni."
     exit 1
 fi
 
-SKILL_SOURCE="$SCRIPT_DIR/SKILL.md"
+SKILL_SOURCE="$REPO_DIR/SKILL.md"
 
 echo ""
 echo "🤖 Selecciona el entorno o Harness de IA que utilizas:"
@@ -133,6 +146,7 @@ echo "💡 Ahora puedes ejecutar desde cualquier terminal:"
 echo "   - cogni search --query \"...\""
 echo "   - cogni save --title \"...\" --summary \"...\""
 echo "   - cogni ui          (Abre el Dashboard visual en navegador)"
+echo "   - cogni upgrade     (Verifica y actualiza a la última versión)"
 echo "   - cogni share       (Exporta memorias en Markdown)"
 echo "   - cogni stats       (Métricas de tokens ahorrados)"
 echo ""

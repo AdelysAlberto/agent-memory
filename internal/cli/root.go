@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/AdelysAlberto/cogni/internal/core"
 	"github.com/AdelysAlberto/cogni/internal/server"
@@ -33,7 +36,13 @@ func Execute(args []string) int {
 	case "search":
 		return handleSearch(cmdArgs)
 	case "update":
+		// If called without memory flags or with --check, route to upgrade
+		if len(cmdArgs) == 0 || (len(cmdArgs) == 1 && (cmdArgs[0] == "--check" || cmdArgs[0] == "-c")) {
+			return handleUpgrade(cmdArgs)
+		}
 		return handleUpdate(cmdArgs)
+	case "upgrade":
+		return handleUpgrade(cmdArgs)
 	case "remove", "delete":
 		return handleRemove(cmdArgs)
 	case "share", "export":
@@ -47,7 +56,7 @@ func Execute(args []string) int {
 	case "uninstall":
 		return handleUninstall(cmdArgs)
 	case "version", "--version", "-v":
-		fmt.Printf("🧠 Cogni %s\n", Version)
+		fmt.Printf("🧠 Cogni v%s\n", Version)
 		return 0
 	case "help", "--help", "-h":
 		printUsage()
@@ -550,4 +559,69 @@ func handleUninstall(args []string) int {
 
 	fmt.Println("✅ Desinstalación de Cogni completada con éxito.")
 	return 0
+}
+
+func handleUpgrade(args []string) int {
+	fmt.Println("🔍 Comprobando actualizaciones en GitHub (AdelysAlberto/agent-memory)...")
+
+	latestTag, releaseURL, err := fetchLatestRelease()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "⚠️ No se pudo comprobar la versión remota: %v\n", err)
+		return 1
+	}
+
+	current := "v" + strings.TrimPrefix(Version, "v")
+	current = strings.Split(current, " ")[0] // Clean extra suffixes if any
+	latest := "v" + strings.TrimPrefix(latestTag, "v")
+
+	fmt.Printf("• Versión local:  %s\n", current)
+	fmt.Printf("• Versión remota: %s\n", latest)
+
+	if latest == current {
+		fmt.Printf("✨ Ya estás ejecutando la última versión de Cogni (%s).\n", current)
+		return 0
+	}
+
+	fmt.Printf("\n🚀 ¡Nueva versión disponible: %s! (%s)\n", latest, releaseURL)
+	fmt.Println("📥 Descargando e instalando actualización...")
+
+	cmd := exec.Command("bash", "-c", "curl -fsSL https://raw.githubusercontent.com/AdelysAlberto/agent-memory/main/install.sh | bash")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "❌ Error durante la actualización: %v\n", err)
+		return 1
+	}
+
+	fmt.Printf("🎉 ¡Cogni ha sido actualizado con éxito a la versión %s!\n", latest)
+	return 0
+}
+
+func fetchLatestRelease() (string, string, error) {
+	client := &http.Client{Timeout: 8 * time.Second}
+	req, err := http.NewRequest("GET", "https://api.github.com/repos/AdelysAlberto/agent-memory/releases/latest", nil)
+	if err != nil {
+		return "", "", err
+	}
+	req.Header.Set("User-Agent", "Cogni-CLI")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("código HTTP %d recibido de GitHub", resp.StatusCode)
+	}
+
+	var data struct {
+		TagName string `json:"tag_name"`
+		HTMLURL string `json:"html_url"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return "", "", err
+	}
+
+	return data.TagName, data.HTMLURL, nil
 }
