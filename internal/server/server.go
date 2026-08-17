@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os/exec"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -17,13 +18,14 @@ import (
 )
 
 type Server struct {
-	storage *storage.Storage
-	host    string
-	port    int
-	srv     *http.Server
+	localStorage  *storage.Storage
+	globalStorage *storage.Storage
+	host          string
+	port          int
+	srv           *http.Server
 }
 
-func New(s *storage.Storage, host string, port int) *Server {
+func New(localStorage, globalStorage *storage.Storage, host string, port int) *Server {
 	if host == "" {
 		host = "127.0.0.1"
 	}
@@ -31,9 +33,10 @@ func New(s *storage.Storage, host string, port int) *Server {
 		port = 3000
 	}
 	return &Server{
-		storage: s,
-		host:    host,
-		port:    port,
+		localStorage:  localStorage,
+		globalStorage: globalStorage,
+		host:          host,
+		port:          port,
 	}
 }
 
@@ -45,6 +48,7 @@ func (s *Server) Start(openBrowser bool) (string, error) {
 	mux.HandleFunc("/api/stats", s.handleStats)
 	mux.HandleFunc("/api/projects", s.handleProjects)
 	mux.HandleFunc("/api/memories", s.handleMemories)
+	mux.HandleFunc("/api/memories/promote", s.handlePromote)
 	mux.HandleFunc("/api/memories/", s.handleMemoryByID)
 
 	// 2. Register Embedded Static Web Files
@@ -80,7 +84,12 @@ func (s *Server) Start(openBrowser bool) (string, error) {
 
 	url := fmt.Sprintf("http://%s:%d", s.host, s.port)
 	fmt.Printf("\n🧠 [Cogni] Dashboard iniciado con éxito en: %s\n", url)
-	fmt.Printf("📂 Base de datos activa: %s\n", s.storage.DBPath())
+	if s.localStorage != nil {
+		fmt.Printf("📂 Base de datos local:  %s\n", s.localStorage.DBPath())
+	}
+	if s.globalStorage != nil {
+		fmt.Printf("🌐 Base de datos global: %s\n", s.globalStorage.DBPath())
+	}
 	fmt.Println("Presiona Ctrl+C para detener el servidor.")
 	fmt.Println()
 
@@ -91,7 +100,6 @@ func (s *Server) Start(openBrowser bool) (string, error) {
 	return url, s.srv.Serve(listener)
 }
 
-// findAvailableListener scans starting from desiredPort to find an open TCP port
 func findAvailableListener(host string, startPort int) (net.Listener, int, error) {
 	for p := startPort; p < startPort+50; p++ {
 		addr := fmt.Sprintf("%s:%d", host, p)
@@ -100,7 +108,6 @@ func findAvailableListener(host string, startPort int) (net.Listener, int, error
 			return l, p, nil
 		}
 	}
-	// Fallback to random dynamic port
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:0", host))
 	if err != nil {
 		return nil, 0, err
@@ -130,13 +137,11 @@ func (s *Server) securityMiddleware(next http.Handler) http.Handler {
 			hostHeader = strings.Split(hostHeader, ":")[0]
 		}
 
-		// Prevent DNS Rebinding & Host header attacks
 		if s.host == "127.0.0.1" && hostHeader != "localhost" && hostHeader != "127.0.0.1" && hostHeader != "" {
 			http.Error(w, "Acceso denegado: Host no autorizado.", http.StatusForbidden)
 			return
 		}
 
-		// CORS validation
 		origin := r.Header.Get("Origin")
 		if origin != "" {
 			if strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1") {
@@ -163,12 +168,41 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	stats, err := s.storage.GetStats()
-	if err != nil {
-		sendJSON(w, map[string]string{"error": err.Error()}, http.StatusInternalServerError)
-		return
+
+	var totalMemories, totalProjects, totalTokens int64
+	seenProjects := make(map[string]bool)
+
+	if s.localStorage != nil {
+		if st, err := s.localStorage.GetStats(); err == nil {
+			totalMemories += st.TotalMemories
+			totalTokens += st.EstimatedTokensSaved
+		}
+		if projs, err := s.localStorage.GetProjects(); err == nil {
+			for _, p := range projs {
+				seenProjects[p] = true
+			}
+		}
 	}
-	sendJSON(w, stats, http.StatusOK)
+
+	if s.globalStorage != nil && (s.localStorage == nil || s.localStorage.DBPath() != s.globalStorage.DBPath()) {
+		if st, err := s.globalStorage.GetStats(); err == nil {
+			totalMemories += st.TotalMemories
+			totalTokens += st.EstimatedTokensSaved
+		}
+		if projs, err := s.globalStorage.GetProjects(); err == nil {
+			for _, p := range projs {
+				seenProjects[p] = true
+			}
+		}
+	}
+
+	totalProjects = int64(len(seenProjects))
+
+	sendJSON(w, core.Stats{
+		TotalMemories:        totalMemories,
+		TotalProjects:        totalProjects,
+		EstimatedTokensSaved: totalTokens,
+	}, http.StatusOK)
 }
 
 func (s *Server) handleProjects(w http.ResponseWriter, r *http.Request) {
@@ -176,11 +210,29 @@ func (s *Server) handleProjects(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	projects, err := s.storage.GetProjects()
-	if err != nil {
-		sendJSON(w, map[string]string{"error": err.Error()}, http.StatusInternalServerError)
-		return
+
+	projectMap := make(map[string]bool)
+	if s.localStorage != nil {
+		if projs, err := s.localStorage.GetProjects(); err == nil {
+			for _, p := range projs {
+				projectMap[p] = true
+			}
+		}
 	}
+	if s.globalStorage != nil {
+		if projs, err := s.globalStorage.GetProjects(); err == nil {
+			for _, p := range projs {
+				projectMap[p] = true
+			}
+		}
+	}
+
+	var projects []string
+	for p := range projectMap {
+		projects = append(projects, p)
+	}
+	sort.Strings(projects)
+
 	sendJSON(w, projects, http.StatusOK)
 }
 
@@ -190,30 +242,68 @@ func (s *Server) handleMemories(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query().Get("query")
 		project := r.URL.Query().Get("project")
 		category := r.URL.Query().Get("category")
+		sourceFilter := r.URL.Query().Get("source") // "local", "global", or ""
 		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 		if limit <= 0 {
-			limit = 50
+			limit = 100
 		}
 
-		var memories []core.Memory
-		var err error
-		if query != "" {
-			memories, err = s.storage.SearchMemories(project, query, category, limit)
-		} else {
-			memories, err = s.storage.ListMemories(project, category, limit, 0)
+		var combined []core.Memory
+
+		// Query Local Storage
+		if (sourceFilter == "" || sourceFilter == "local") && s.localStorage != nil {
+			var localMems []core.Memory
+			if query != "" {
+				localMems, _ = s.localStorage.SearchMemories(project, query, category, limit)
+			} else {
+				localMems, _ = s.localStorage.ListMemories(project, category, limit, 0)
+			}
+			for i := range localMems {
+				localMems[i].Source = "local"
+			}
+			combined = append(combined, localMems...)
 		}
 
-		if err != nil {
-			sendJSON(w, map[string]string{"error": err.Error()}, http.StatusInternalServerError)
-			return
+		// Query Global Storage
+		if (sourceFilter == "" || sourceFilter == "global") && s.globalStorage != nil {
+			// Avoid duplicate query if local and global point to same DB
+			if s.localStorage == nil || s.localStorage.DBPath() != s.globalStorage.DBPath() {
+				var globalMems []core.Memory
+				if query != "" {
+					globalMems, _ = s.globalStorage.SearchMemories(project, query, category, limit)
+				} else {
+					globalMems, _ = s.globalStorage.ListMemories(project, category, limit, 0)
+				}
+				for i := range globalMems {
+					globalMems[i].Source = "global"
+				}
+				combined = append(combined, globalMems...)
+			}
 		}
-		if memories == nil {
-			memories = []core.Memory{}
+
+		// Sort all memories by created_at DESC
+		sort.Slice(combined, func(i, j int) bool {
+			return combined[i].CreatedAt.After(combined[j].CreatedAt)
+		})
+
+		if len(combined) > limit {
+			combined = combined[:limit]
 		}
-		sendJSON(w, memories, http.StatusOK)
+
+		if combined == nil {
+			combined = []core.Memory{}
+		}
+		sendJSON(w, combined, http.StatusOK)
 
 	case http.MethodPost:
-		var m core.Memory
+		var m struct {
+			ProjectName      string `json:"project_name"`
+			Category         string `json:"category"`
+			Title            string `json:"title"`
+			SummarySignature string `json:"summary_signature"`
+			Tags             string `json:"tags"`
+			Target           string `json:"target"` // "local" or "global"
+		}
 		if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 			sendJSON(w, map[string]string{"error": "Payload JSON inválido"}, http.StatusBadRequest)
 			return
@@ -230,13 +320,32 @@ func (s *Server) handleMemories(w http.ResponseWriter, r *http.Request) {
 		if m.Category == "" {
 			m.Category = "general"
 		}
-		m.Tags = core.FormatTags(m.Tags, m.ProjectName)
+		formattedTags := core.FormatTags(m.Tags, m.ProjectName)
 
-		saved, err := s.storage.SaveMemory(&m)
+		mem := &core.Memory{
+			ProjectName:      m.ProjectName,
+			Category:         m.Category,
+			Title:            m.Title,
+			SummarySignature: m.SummarySignature,
+			Tags:             formattedTags,
+		}
+
+		targetStorage := s.localStorage
+		if m.Target == "global" || targetStorage == nil {
+			targetStorage = s.globalStorage
+		}
+
+		if targetStorage == nil {
+			sendJSON(w, map[string]string{"error": "Base de datos de destino no disponible"}, http.StatusInternalServerError)
+			return
+		}
+
+		saved, err := targetStorage.SaveMemory(mem)
 		if err != nil {
 			sendJSON(w, map[string]string{"error": err.Error()}, http.StatusInternalServerError)
 			return
 		}
+		saved.Source = targetStorage.Source()
 		sendJSON(w, saved, http.StatusCreated)
 
 	default:
@@ -244,20 +353,79 @@ func (s *Server) handleMemories(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *Server) handlePromote(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		ID   int64  `json:"id"`
+		From string `json:"from"` // "local" or "global"
+		To   string `json:"to"`   // "global" or "local"
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendJSON(w, map[string]string{"error": "Payload inválido"}, http.StatusBadRequest)
+		return
+	}
+
+	if req.ID <= 0 {
+		sendJSON(w, map[string]string{"error": "ID es obligatorio"}, http.StatusBadRequest)
+		return
+	}
+
+	var src, dst *storage.Storage
+	if req.From == "global" || (req.To == "local" && s.localStorage != nil) {
+		src = s.globalStorage
+		dst = s.localStorage
+	} else {
+		src = s.localStorage
+		dst = s.globalStorage
+	}
+
+	if src == nil || dst == nil {
+		sendJSON(w, map[string]string{"error": "Ambas bases de datos (local y global) deben estar activas para promover"}, http.StatusBadRequest)
+		return
+	}
+
+	promoted, err := storage.PromoteMemory(src, dst, req.ID)
+	if err != nil {
+		sendJSON(w, map[string]string{"error": err.Error()}, http.StatusInternalServerError)
+		return
+	}
+
+	promoted.Source = dst.Source()
+	sendJSON(w, promoted, http.StatusOK)
+}
+
 func (s *Server) handleMemoryByID(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/api/memories/")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	path := strings.TrimPrefix(r.URL.Path, "/api/memories/")
+	if path == "promote" {
+		s.handlePromote(w, r)
+		return
+	}
+
+	id, err := strconv.ParseInt(path, 10, 64)
 	if err != nil || id <= 0 {
 		sendJSON(w, map[string]string{"error": "ID de memoria inválido"}, http.StatusBadRequest)
 		return
 	}
 
+	source := r.URL.Query().Get("source") // "local" or "global"
+	targetStorage := s.localStorage
+	if source == "global" || targetStorage == nil {
+		targetStorage = s.globalStorage
+	}
+
 	switch r.Method {
 	case http.MethodGet:
-		mem, err := s.storage.GetMemoryByID(id)
+		mem, err := targetStorage.GetMemoryByID(id)
 		if err != nil {
 			sendJSON(w, map[string]string{"error": err.Error()}, http.StatusInternalServerError)
 			return
+		}
+		if mem == nil && targetStorage != s.globalStorage && s.globalStorage != nil {
+			mem, err = s.globalStorage.GetMemoryByID(id)
 		}
 		if mem == nil {
 			sendJSON(w, map[string]string{"error": "Memoria no encontrada"}, http.StatusNotFound)
@@ -277,7 +445,7 @@ func (s *Server) handleMemoryByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		updated, err := s.storage.UpdateMemory(id, body.Title, body.SummarySignature, body.Category, body.Tags)
+		updated, err := targetStorage.UpdateMemory(id, body.Title, body.SummarySignature, body.Category, body.Tags)
 		if err != nil {
 			sendJSON(w, map[string]string{"error": err.Error()}, http.StatusInternalServerError)
 			return
@@ -285,7 +453,7 @@ func (s *Server) handleMemoryByID(w http.ResponseWriter, r *http.Request) {
 		sendJSON(w, updated, http.StatusOK)
 
 	case http.MethodDelete:
-		deleted, err := s.storage.DeleteMemory(id)
+		deleted, err := targetStorage.DeleteMemory(id)
 		if err != nil {
 			sendJSON(w, map[string]string{"error": err.Error()}, http.StatusInternalServerError)
 			return

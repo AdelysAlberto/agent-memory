@@ -16,10 +16,16 @@ import (
 type Storage struct {
 	db     *sql.DB
 	dbPath string
+	source string
 }
 
 // New creates and initializes a SQLite storage engine
 func New(dbPath string) (*Storage, error) {
+	return NewWithSource(dbPath, "")
+}
+
+// NewWithSource creates and initializes a SQLite storage engine with explicit source tag
+func NewWithSource(dbPath string, source string) (*Storage, error) {
 	// Auto migrate legacy database if applicable
 	migrateLegacyDatabase(dbPath)
 
@@ -38,7 +44,7 @@ func New(dbPath string) (*Storage, error) {
 	_, _ = db.Exec("PRAGMA synchronous = NORMAL;")
 	_, _ = db.Exec("PRAGMA busy_timeout = 5000;")
 
-	s := &Storage{db: db, dbPath: dbPath}
+	s := &Storage{db: db, dbPath: dbPath, source: source}
 	if err := s.initSchema(); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("failed to initialize schema: %w", err)
@@ -53,6 +59,16 @@ func (s *Storage) Close() error {
 		return s.db.Close()
 	}
 	return nil
+}
+
+// SetSource updates the source label
+func (s *Storage) SetSource(src string) {
+	s.source = src
+}
+
+// Source returns the source label (local or global)
+func (s *Storage) Source() string {
+	return s.source
 }
 
 // DBPath returns current database file path
@@ -270,6 +286,7 @@ func (s *Storage) GetMemoryByID(id int64) (*core.Memory, error) {
 
 	m.CreatedAt = parseTime(createdAtStr)
 	m.UpdatedAt = parseTime(updatedAtStr)
+	m.Source = s.source
 	return &m, nil
 }
 
@@ -304,6 +321,7 @@ func (s *Storage) SearchMemories(projectName, query, category string, limit int)
 				if err := rows.Scan(&m.ID, &m.ProjectName, &m.Category, &m.Title, &m.SummarySignature, &m.Tags, &cStr, &uStr); err == nil {
 					m.CreatedAt = parseTime(cStr)
 					m.UpdatedAt = parseTime(uStr)
+					m.Source = s.source
 					memories = append(memories, m)
 				}
 			}
@@ -339,6 +357,7 @@ func (s *Storage) SearchMemories(projectName, query, category string, limit int)
 		}
 		m.CreatedAt = parseTime(cStr)
 		m.UpdatedAt = parseTime(uStr)
+		m.Source = s.source
 		memories = append(memories, m)
 	}
 
@@ -375,10 +394,36 @@ func (s *Storage) ListMemories(projectName, category string, limit, offset int) 
 		}
 		m.CreatedAt = parseTime(cStr)
 		m.UpdatedAt = parseTime(uStr)
+		m.Source = s.source
 		memories = append(memories, m)
 	}
 
 	return memories, nil
+}
+
+// PromoteMemory copies a memory from src Storage to dst Storage
+func PromoteMemory(src *Storage, dst *Storage, id int64) (*core.Memory, error) {
+	if src == nil || dst == nil {
+		return nil, fmt.Errorf("almacenamiento no inicializado")
+	}
+
+	mem, err := src.GetMemoryByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if mem == nil {
+		return nil, fmt.Errorf("memoria #%d no encontrada en origen", id)
+	}
+
+	clone := &core.Memory{
+		ProjectName:      mem.ProjectName,
+		Category:         mem.Category,
+		Title:            mem.Title,
+		SummarySignature: mem.SummarySignature,
+		Tags:             mem.Tags,
+	}
+
+	return dst.SaveMemory(clone)
 }
 
 // GetProjects returns all unique project names

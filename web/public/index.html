@@ -19,7 +19,7 @@
         <span class="badge">v2.0 Go Core</span>
       </div>
       <div class="navbar-actions">
-        <button id="btn-export-markdown" class="btn btn-secondary" title="Exportar memorias del proyecto actual">
+        <button id="btn-export-markdown" class="btn btn-secondary" title="Exportar memorias en Markdown">
           <span>📋</span> Exportar MD
         </button>
         <button id="btn-new-memory" class="btn btn-primary">
@@ -59,7 +59,15 @@
       <section class="controls-bar glass">
         <div class="search-box">
           <span class="search-icon">🔍</span>
-          <input type="text" id="search-input" placeholder="Buscar firmas con FTS5, tags, conceptos o títulos..." autocomplete="off">
+          <input type="text" id="search-input" placeholder="Buscar firmas con FTS5 (Local y Global)..." autocomplete="off">
+        </div>
+        <div class="filter-box">
+          <label for="source-select">Origen:</label>
+          <select id="source-select">
+            <option value="">Todas (Local + Global)</option>
+            <option value="local">📂 Solo Local (.cogni/)</option>
+            <option value="global">🌐 Solo Global (~/.cogni/)</option>
+          </select>
         </div>
         <div class="filter-box">
           <label for="project-select">Proyecto:</label>
@@ -95,30 +103,91 @@
     </main>
   </div>
 
-  <!-- Modal for Creating/Editing Memory -->
-  <div id="modal-container" class="modal-overlay hidden">
-    <div class="modal-content glass">
-      <div class="modal-header">
-        <h3 id="modal-title-text">✨ Registrar Firma Semántica en Cogni</h3>
-        <button id="modal-close" class="btn-close">&times;</button>
-      </div>
-      <form id="memory-form">
-        <input type="hidden" id="form-id" value="">
-        <div class="form-group">
-          <label for="form-project">Proyecto *</label>
-          <input type="text" id="form-project" required placeholder="ej. mi-proyecto-web">
+  <!-- Detail Dialog (Native HTML5 <dialog>) -->
+  <dialog id="detail-dialog" class="native-dialog glass">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <div class="badge-row">
+          <span id="detail-source-badge" class="source-badge">LOCAL</span>
+          <span id="detail-project-badge" class="project-badge">proyecto</span>
+          <span id="detail-category-badge" class="category-badge">general</span>
         </div>
+        <button id="btn-close-detail" class="btn-close" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div class="dialog-body">
+        <h2 id="detail-title" class="detail-title">Título de la Memoria</h2>
+        
+        <div class="signature-box">
+          <div class="signature-box-header">
+            <span>Firma Sintética (Dense Knowledge)</span>
+            <button id="btn-copy-signature" class="btn-copy" title="Copiar al portapapeles">📋 Copiar</button>
+          </div>
+          <pre id="detail-summary" class="signature-text"></pre>
+        </div>
+
+        <div class="meta-section">
+          <div class="tags-row">
+            <span class="meta-label">Tags (3 Capas):</span>
+            <div id="detail-tags" class="tags-container"></div>
+          </div>
+          <div class="timestamps-row">
+            <span id="detail-date" class="meta-date">Fecha</span>
+            <span id="detail-id" class="meta-id">ID: #0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-footer">
+        <button id="btn-promote" class="btn btn-promote">
+          <span>🌐</span> Promover a Global
+        </button>
+        <div class="dialog-actions-right">
+          <button id="btn-edit-detail" class="btn btn-secondary">✏️ Editar</button>
+          <button id="btn-delete-detail" class="btn btn-danger">🗑️ Eliminar</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Create/Edit Form Dialog (Native HTML5 <dialog>) -->
+  <dialog id="form-dialog" class="native-dialog glass">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h3 id="form-dialog-title">✨ Registrar Firma Semántica en Cogni</h3>
+        <button id="btn-close-form" class="btn-close" aria-label="Cerrar">&times;</button>
+      </div>
+      <form id="memory-form" method="dialog">
+        <input type="hidden" id="form-id" value="">
+        <input type="hidden" id="form-source" value="local">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="form-target">Guardar en:</label>
+            <select id="form-target">
+              <option value="local">📂 Base Local (.cogni/)</option>
+              <option value="global">🌐 Base Global (~/.cogni/)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="form-project">Proyecto *</label>
+            <input type="text" id="form-project" required placeholder="ej. mi-proyecto-web">
+          </div>
+        </div>
+
         <div class="form-group">
           <label for="form-title">Título / Hito *</label>
           <input type="text" id="form-title" required placeholder="ej. Middleware JWT implementado">
         </div>
+
         <div class="form-group">
           <div class="label-with-hint">
             <label for="form-summary">Resumen Sintético (Firma) *</label>
             <span class="hint">Alta densidad semántica para reducir tokens</span>
           </div>
-          <textarea id="form-summary" rows="4" required placeholder="Se implementó JWT con RSA256 en internal/auth..."></textarea>
+          <textarea id="form-summary" rows="5" required placeholder="Se implementó JWT con RSA256 en internal/auth..."></textarea>
         </div>
+
         <div class="form-row">
           <div class="form-group">
             <label for="form-category">Categoría</label>
@@ -137,13 +206,14 @@
             <input type="text" id="form-tags" placeholder="ej. auth, jwt, security">
           </div>
         </div>
+
         <div class="modal-actions">
-          <button type="button" id="form-cancel" class="btn btn-secondary">Cancelar</button>
-          <button type="submit" id="form-submit" class="btn btn-primary">Guardar en Cogni</button>
+          <button type="button" id="btn-cancel-form" class="btn btn-secondary">Cancelar</button>
+          <button type="submit" id="btn-submit-form" class="btn btn-primary">Guardar en Cogni</button>
         </div>
       </form>
     </div>
-  </div>
+  </dialog>
 
   <script src="app.js"></script>
 </body>

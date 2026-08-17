@@ -51,6 +51,8 @@ func Execute(args []string) int {
 		return handleList(cmdArgs)
 	case "stats":
 		return handleStats(cmdArgs)
+	case "promote":
+		return handlePromote(cmdArgs)
 	case "ui":
 		return handleUI(cmdArgs)
 	case "skill", "skills":
@@ -81,13 +83,15 @@ Uso:
 Comandos Principales:
   init        Inicializa el directorio local .cogni/ en el proyecto actual
   save        Guarda una firma de memoria sintética
-  search      Busca firmas de memoria con FTS5
+  search      Busca firmas de memoria con FTS5 (local y global federado)
   update      Actualiza una memoria existente por su ID
+  promote     Promueve una memoria de local a global (o viceversa)
   remove      Elimina una memoria por su ID
   share       Exporta o comparte firmas de memoria (Markdown / JSON)
   list        Lista las memorias registradas
   stats       Muestra métricas y tokens ahorrados
   ui          Abre el dashboard gráfico interactivo en el navegador
+  skill       Instala o actualiza el Skill en tus arneses de IA
   uninstall   Desinstala Cogni, elimina el binario y limpia las skills
   version     Muestra la versión de Cogni
 
@@ -313,13 +317,30 @@ func handleSave(args []string) int {
 	return 0
 }
 
+func getStorages() (*storage.Storage, *storage.Storage) {
+	globalPath := core.ResolveDatabasePath("", true)
+	globalStorage, _ := storage.NewWithSource(globalPath, "global")
+
+	var localStorage *storage.Storage
+	localDir := core.FindLocalCogniDir()
+	if localDir != "" {
+		localPath := filepath.Join(localDir, "memory.db")
+		if filepath.Clean(localPath) != filepath.Clean(globalPath) {
+			localStorage, _ = storage.NewWithSource(localPath, "local")
+		}
+	}
+
+	return localStorage, globalStorage
+}
+
 func handleSearch(args []string) int {
 	fs := flag.NewFlagSet("search", flag.ExitOnError)
 	query := fs.String("query", "", "Término de búsqueda")
 	project := fs.String("project", "", "Filtrar por proyecto")
 	category := fs.String("category", "", "Filtrar por categoría")
 	limit := fs.Int("limit", 10, "Límite de resultados")
-	global := fs.Bool("global", false, "Buscar en la base de datos global")
+	globalOnly := fs.Bool("global", false, "Buscar solo en la base de datos global")
+	localOnly := fs.Bool("local", false, "Buscar solo en la base de datos local")
 	dbPath := fs.String("db", "", "Ruta a la base de datos")
 	asJSON := fs.Bool("json", false, "Salida en JSON")
 
@@ -330,22 +351,47 @@ func handleSearch(args []string) int {
 		*query = strings.Join(fs.Args(), " ")
 	}
 
-	s, err := getStorage(*dbPath, *global)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error conectando a BD: %v\n", err)
-		return 1
-	}
-	defer s.Close()
-
 	projectName := *project
-	if projectName == "" && !*global {
+	if projectName == "" && !*globalOnly {
 		projectName = core.DetectProjectName()
 	}
 
-	results, err := s.SearchMemories(projectName, *query, *category, *limit)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error en búsqueda: %v\n", err)
-		return 1
+	localStorage, globalStorage := getStorages()
+	if localStorage != nil {
+		defer localStorage.Close()
+	}
+	if globalStorage != nil {
+		defer globalStorage.Close()
+	}
+
+	var results []core.Memory
+
+	if *dbPath != "" {
+		s, err := storage.New(*dbPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error conectando a BD: %v\n", err)
+			return 1
+		}
+		defer s.Close()
+		results, _ = s.SearchMemories(projectName, *query, *category, *limit)
+	} else if *globalOnly {
+		if globalStorage != nil {
+			results, _ = globalStorage.SearchMemories(projectName, *query, *category, *limit)
+		}
+	} else if *localOnly {
+		if localStorage != nil {
+			results, _ = localStorage.SearchMemories(projectName, *query, *category, *limit)
+		}
+	} else {
+		// Layered search: Local first, then Global
+		if localStorage != nil {
+			localRes, _ := localStorage.SearchMemories(projectName, *query, *category, *limit)
+			results = append(results, localRes...)
+		}
+		if globalStorage != nil {
+			globalRes, _ := globalStorage.SearchMemories(projectName, *query, *category, *limit)
+			results = append(results, globalRes...)
+		}
 	}
 
 	if *asJSON {
@@ -363,11 +409,66 @@ func handleSearch(args []string) int {
 
 	fmt.Printf("🔍 Se encontraron %d memoria(s):\n\n", len(results))
 	for _, m := range results {
-		fmt.Printf("━━━ [#%d] [%s] %s ━━━\n", m.ID, m.ProjectName, m.Title)
+		srcBadge := "LOCAL"
+		if m.Source == "global" {
+			srcBadge = "GLOBAL"
+		}
+		fmt.Printf("━━━ [%s #%d] [%s] %s ━━━\n", srcBadge, m.ID, m.ProjectName, m.Title)
 		fmt.Printf("🏷️ Tags: %s | 📂 Categoría: %s\n", m.Tags, m.Category)
 		fmt.Printf("📝 %s\n\n", m.SummarySignature)
 	}
 
+	return 0
+}
+
+func handlePromote(args []string) int {
+	fs := flag.NewFlagSet("promote", flag.ExitOnError)
+	id := fs.Int64("id", 0, "ID de la memoria a promover")
+	to := fs.String("to", "global", "Destino: global o local")
+	_ = fs.Parse(args)
+
+	if *id <= 0 && len(fs.Args()) > 0 {
+		parsed, _ := strconv.ParseInt(fs.Args()[0], 10, 64)
+		*id = parsed
+	}
+
+	if *id <= 0 {
+		fmt.Fprintln(os.Stderr, "Error: Especifica el ID de la memoria a promover (ej. cogni promote --id 1).")
+		return 1
+	}
+
+	localStorage, globalStorage := getStorages()
+	if localStorage != nil {
+		defer localStorage.Close()
+	}
+	if globalStorage != nil {
+		defer globalStorage.Close()
+	}
+
+	if localStorage == nil || globalStorage == nil {
+		fmt.Fprintln(os.Stderr, "Error: Se requiere tener tanto base de datos local (.cogni/) como global (~/.cogni/) para promover.")
+		return 1
+	}
+
+	var src, dst *storage.Storage
+	var targetName string
+	if *to == "local" {
+		src = globalStorage
+		dst = localStorage
+		targetName = "local (.cogni/)"
+	} else {
+		src = localStorage
+		dst = globalStorage
+		targetName = "global (~/.cogni/)"
+	}
+
+	promoted, err := storage.PromoteMemory(src, dst, *id)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error promoviendo memoria: %v\n", err)
+		return 1
+	}
+
+	fmt.Printf("🌐 Memoria #%d (\"%s\") promovida con éxito a %s como #%d.\n", *id, promoted.Title, targetName, promoted.ID)
 	return 0
 }
 
@@ -585,19 +686,40 @@ func handleUI(args []string) int {
 	port := fs.Int("port", 3000, "Puerto inicial para el servidor HTTP")
 	host := fs.String("host", "127.0.0.1", "Host para el servidor HTTP")
 	noBrowser := fs.Bool("no-browser", false, "No abrir el navegador automáticamente")
-	global := fs.Bool("global", false, "Usar base de datos global")
-	dbPath := fs.String("db", "", "Ruta a BD")
+	globalOnly := fs.Bool("global", false, "Usar exclusivamente base de datos global")
+	dbPath := fs.String("db", "", "Ruta a BD personalizada")
 
 	_ = fs.Parse(args)
 
-	s, err := getStorage(*dbPath, *global)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error inicializando base de datos: %v\n", err)
-		return 1
+	var localStorage, globalStorage *storage.Storage
+	if *dbPath != "" {
+		s, err := storage.New(*dbPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error inicializando base de datos: %v\n", err)
+			return 1
+		}
+		defer s.Close()
+		globalStorage = s
+	} else if *globalOnly {
+		globalPath := core.ResolveDatabasePath("", true)
+		s, err := storage.NewWithSource(globalPath, "global")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error inicializando base de datos global: %v\n", err)
+			return 1
+		}
+		defer s.Close()
+		globalStorage = s
+	} else {
+		localStorage, globalStorage = getStorages()
+		if localStorage != nil {
+			defer localStorage.Close()
+		}
+		if globalStorage != nil {
+			defer globalStorage.Close()
+		}
 	}
-	defer s.Close()
 
-	srv := server.New(s, *host, *port)
+	srv := server.New(localStorage, globalStorage, *host, *port)
 	if _, err := srv.Start(!*noBrowser); err != nil {
 		fmt.Fprintf(os.Stderr, "Error iniciando servidor UI: %v\n", err)
 		return 1

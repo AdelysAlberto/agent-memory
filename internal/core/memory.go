@@ -10,6 +10,7 @@ type Memory struct {
 	Title            string    `json:"title"`
 	SummarySignature string    `json:"summary_signature"`
 	Tags             string    `json:"tags"`
+	Source           string    `json:"source,omitempty"` // "local" or "global"
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
 }
