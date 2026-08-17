@@ -23,3 +23,4 @@ coverage.txt
 .vscode/
 .idea/
 tmp/
+.agents/

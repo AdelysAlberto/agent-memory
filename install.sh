@@ -5,6 +5,8 @@ set -e
 echo "🧠 ========================================================"
 echo "   [Cogni] Instalador Universal de Memoria para Agentes"
 echo "   Cognitive Omniscient Grid for Networked Intelligence"
+echo "   \"Así como el Byte es la unidad de datos,"
+echo "    Cogni es la unidad de conocimiento sintético de tu agente.\""
 echo "========================================================"
 
 HOME_DIR="$HOME"

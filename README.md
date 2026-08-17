@@ -1,7 +1,7 @@
 # 🧠 Cogni
 
 > **Cognitive Omniscient Grid for Networked Intelligence**  
-> *Sistema de Memoria Autónoma de Alta Densidad & Reducción de Tokens para Agentes de IA.*  
+> *"Así como el Byte es la unidad de datos, Cogni es la unidad de conocimiento sintético de tu agente."*  
 > Compatible nativamente con **Antigravity**, **Cursor IDE**, **GitHub Copilot**, **OpenCode**, **Hermes CLI** y entornos Agentic universales.
 
 Cogni almacena **firmas semánticas sintéticas** en una base de datos **SQLite local o centralizada**, reduciendo hasta un **95% el consumo de tokens de contexto** y garantizando la coherencia arquitectónica entre sesiones de desarrollo.

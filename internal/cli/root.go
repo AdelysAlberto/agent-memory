@@ -75,7 +75,7 @@ func Execute(args []string) int {
 
 func printUsage() {
 	usage := `🧠 Cogni — Cognitive Omniscient Grid for Networked Intelligence
-Sistema de memoria y firmas semánticas para agentes de Inteligencia Artificial
+"Así como el Byte es la unidad de datos, Cogni es la unidad de conocimiento sintético de tu agente."
 
 Uso:
   cogni <comando> [argumentos...]
