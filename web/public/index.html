@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>agents-memory | Neural Memory Dashboard</title>
+  <title>Cogni | Neural Memory & Agent Knowledge System</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -15,10 +15,13 @@
     <header class="navbar">
       <div class="logo">
         <span class="brain-icon">🧠</span>
-        <span class="logo-text">agents<span class="highlight">-memory</span></span>
-        <span class="badge">v1.0.0</span>
+        <span class="logo-text">Cogni<span class="highlight">.ai</span></span>
+        <span class="badge">v2.0 Go Core</span>
       </div>
       <div class="navbar-actions">
+        <button id="btn-export-markdown" class="btn btn-secondary" title="Exportar memorias del proyecto actual">
+          <span>📋</span> Exportar MD
+        </button>
         <button id="btn-new-memory" class="btn btn-primary">
           <span>+</span> Nueva Memoria
         </button>
@@ -56,7 +59,7 @@
       <section class="controls-bar glass">
         <div class="search-box">
           <span class="search-icon">🔍</span>
-          <input type="text" id="search-input" placeholder="Buscar memorias, tags, conceptos o títulos..." autocomplete="off">
+          <input type="text" id="search-input" placeholder="Buscar firmas con FTS5, tags, conceptos o títulos..." autocomplete="off">
         </div>
         <div class="filter-box">
           <label for="project-select">Proyecto:</label>
@@ -64,12 +67,25 @@
             <option value="">Todos los Proyectos</option>
           </select>
         </div>
+        <div class="filter-box">
+          <label for="category-select">Categoría:</label>
+          <select id="category-select">
+            <option value="">Todas las Categorías</option>
+            <option value="general">General</option>
+            <option value="architecture">Arquitectura</option>
+            <option value="auth">Autenticación</option>
+            <option value="database">Base de Datos</option>
+            <option value="testing">Pruebas / QA</option>
+            <option value="refactor">Refactorización</option>
+            <option value="security">Seguridad</option>
+          </select>
+        </div>
       </section>
 
       <!-- Memory List Feed -->
       <section class="memories-feed">
         <div class="section-title">
-          <h2>Firmas Semánticas Recientes</h2>
+          <h2>Firmas Semánticas de Agentes</h2>
           <span id="feed-count" class="feed-count">0 elementos</span>
         </div>
         <div id="memories-list" class="memories-grid">
@@ -79,28 +95,29 @@
     </main>
   </div>
 
-  <!-- Modal for Creating New Memory -->
+  <!-- Modal for Creating/Editing Memory -->
   <div id="modal-container" class="modal-overlay hidden">
     <div class="modal-content glass">
       <div class="modal-header">
-        <h3>✨ Registrar Nueva Firma de Memoria</h3>
+        <h3 id="modal-title-text">✨ Registrar Firma Semántica en Cogni</h3>
         <button id="modal-close" class="btn-close">&times;</button>
       </div>
       <form id="memory-form">
+        <input type="hidden" id="form-id" value="">
         <div class="form-group">
           <label for="form-project">Proyecto *</label>
           <input type="text" id="form-project" required placeholder="ej. mi-proyecto-web">
         </div>
         <div class="form-group">
           <label for="form-title">Título / Hito *</label>
-          <input type="text" id="form-title" required placeholder="ej. Middleware de Autenticación Implementado">
+          <input type="text" id="form-title" required placeholder="ej. Middleware JWT implementado">
         </div>
         <div class="form-group">
           <div class="label-with-hint">
             <label for="form-summary">Resumen Sintético (Firma) *</label>
-            <span class="hint">Manténlo denso para ahorrar tokens</span>
+            <span class="hint">Alta densidad semántica para reducir tokens</span>
           </div>
-          <textarea id="form-summary" rows="4" required placeholder="Se implementó JWT con RSA256 en src/auth.js. Endpoints actualizados: /login, /refresh..."></textarea>
+          <textarea id="form-summary" rows="4" required placeholder="Se implementó JWT con RSA256 en internal/auth..."></textarea>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -112,16 +129,17 @@
               <option value="database">Base de Datos</option>
               <option value="testing">Pruebas / QA</option>
               <option value="refactor">Refactorización</option>
+              <option value="security">Seguridad</option>
             </select>
           </div>
           <div class="form-group">
-            <label for="form-tags">Etiquetas (Tags)</label>
-            <input type="text" id="form-tags" placeholder="ej. jwt, security, auth (separadas por coma)">
+            <label for="form-tags">Etiquetas (Regla 3 Capas)</label>
+            <input type="text" id="form-tags" placeholder="ej. auth, jwt, security">
           </div>
         </div>
         <div class="modal-actions">
           <button type="button" id="form-cancel" class="btn btn-secondary">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Guardar Memoria</button>
+          <button type="submit" id="form-submit" class="btn btn-primary">Guardar en Cogni</button>
         </div>
       </form>
     </div>

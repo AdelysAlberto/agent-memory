@@ -1,38 +1,25 @@
-# Node.js & Dependencies
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+# Go Binaries & Build Artifacts
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
 
-# Database & Agent Local State
-.agents/
+# Test & Coverage
+*.out
+*.test
+coverage.txt
+
+# Cogni Local Database
+.cogni/
 *.db
-*.sqlite
-*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
 
-# Logs & Temporary Files
-*.log
-logs/
-temp/
-tmp/
-
-# OS Generated Files
+# IDE / OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# IDEs & Editors
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
+.vscode/
 .idea/
-*.swp
-*.swo
-
-# Brain / Artifact Scratch Files
-artifacts/scratch/
+tmp/

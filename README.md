@@ -1,114 +1,141 @@
-# 🧠 agent-memory
+# 🧠 Cogni
 
-> **Sistema de Memoria Local Autónoma & Reducción de Tokens para Agentes de IA.**  
+> **Cognitive Omniscient Grid for Networked Intelligence**  
+> *Sistema de Memoria Autónoma de Alta Densidad & Reducción de Tokens para Agentes de IA.*  
 > Compatible nativamente con **Antigravity**, **Cursor IDE**, **GitHub Copilot**, **OpenCode**, **Hermes CLI** y entornos Agentic universales.
 
-Guarda **firmas semánticas sintéticas** en una base de datos **SQLite local unificada**, logrando reducir hasta un **95% el consumo de tokens de contexto** mientras mantiene la consistencia arquitectónica y el contexto exacto del proyecto día a día.
+Cogni almacena **firmas semánticas sintéticas** en una base de datos **SQLite local o centralizada**, reduciendo hasta un **95% el consumo de tokens de contexto** y garantizando la coherencia arquitectónica entre sesiones de desarrollo.
 
 ---
 
-## 🎯 ¿Por qué nace `agent-memory`? (La Necesidad)
+## ⚡ ¿Por qué Cogni?
 
-Cuando trabajas a diario con Agentes de IA en desarrollo de software, te enfrentas a 2 grandes problemas:
-
-1. **Desperdicio Masivo de Tokens & Costos**: Cada vez que abres un nuevo chat o pides una refactorización, el agente suele releer archivos completos de tu código, documentación o artefactos para entender el estado actual. Esto consume entre **15,000 a 40,000 tokens por mensaje** repetidamente.
-2. **Inconsistencia Arquitectónica ("Invento de Soluciones")**: Al no "recordar" cómo resolvieron juntos la paginación, la autenticación o los estados globales el martes pasado, el agente tiende a proponer patrones distintos o contradictorios días después, rompiendo los estándares de tu codebase.
-
----
-
-## 💡 La Propuesta & Solución
-
-`agent-memory` soluciona esto introduciendo **Memorias Sintéticas de 3 Capas en SQLite**:
-
-- **Compresión Semántica**: En lugar de hacer que la IA vuelva a leer 500 líneas de código, el sistema extrae y guarda **firmas sintéticas densas** (~80 tokens) de las decisiones clave.
-- **Auto-Recuperación Silenciosa (Before Coding)**: Antes de responder o proponer un nuevo diseño, el agente consulta la base de datos local (`agent-memory search --query "auth"`). Si encuentra un estándar previo, **adopta y respeta el mismo patrón exacto**.
-- **Auto-Guardado Autónomo (After Coding)**: Al terminar un hito importante, refactor o fix no trivial, el agente evalúa de forma autónoma la solución y guarda la firma semántica notificándote en el chat con el ícono 💾.
-
-```text
-[Usuario: "Crea la paginación de productos"]
-                   │
-                   ▼
-  [Agente busca en SQLite local] ──> ¿Existe patrón previo de paginación?
-                   │
-                   ├──> SÍ: Recupera la firma (~60 tokens). Aplica Result Pattern + Zustand exacto.
-                   └──> NO: Diseña la mejor solución y guarda la firma para el futuro 💾.
-```
+1. **Binario Único Nativo (Go Core)**: Cero dependencias de runtime (no requiere Node.js, Python ni librerías dinámicas). Compila en un ejecutable estático ultra rápido (< 5 ms de arranque).
+2. **Local-First & Global**: Soporte para bases de datos por proyecto (`.cogni/memory.db`) y almacenamiento global centralizado (`~/.cogni/memory.db`).
+3. **Búsqueda FTS5 de Microsegundos**: Indexación de texto completo (Full-Text Search) sobre conceptos, títulos y etiquetas.
+4. **Web UI Embebida**: Dashboard visual interactivo compilado dentro del binario con auto-detección de puerto libre (cero colisiones `EADDRINUSE`).
+5. **Taxonomía de Tags en 3 Capas**: Estructuración determinista de conocimiento para evitar duplicación y pérdida de contexto.
 
 ---
 
-## ⚡ Instalación Automática en 1 Paso
+## 🛠️ Instalación Rápida
 
-Instala y configura automáticamente la CLI binaria global y las skills de tus arneses de IA ejecutando en terminal:
-
+### Vía Script de Instalación:
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/AdelysAlberto/agent-memory/main/install.sh)
 ```
 
-*El instalador te permitirá elegir en qué arneses de IA registras la Skill (Antigravity, Cursor, OpenCode, Copilot, Hermes o Todos).*
+### O Compilando desde el Repositorio (Go 1.22+):
+```bash
+git clone https://github.com/AdelysAlberto/agent-memory.git cogni
+cd cogni
+make install
+```
+
+*El binario quedará disponible en `$HOME/.local/bin/cogni`.*
 
 ---
 
-## 🚀 Flujo en el Día a Día de Desarrollo
+## 🚀 Flujo y Comandos de la CLI
 
-Una vez instalado, el comando `agent-memory` está disponible globalmente en cualquier terminal:
-
-### 1. Onboarding de un Proyecto Nuevo
-Al abrir un repositorio por primera vez, ejecuta:
-```bash
-agent-memory onboard
+```text
+[Operador / Agente ejecuta acción]
+                   │
+                   ▼
+       ¿Existe estándar previo?
+        cogni search --query "auth"
+                   │
+         ┌─────────┴─────────┐
+         ▼                   ▼
+      [ SÍ ]               [ NO ]
+Recupera firma densa     Diseña solución
+(~60 tokens) y aplica    y registra firma:
+patrón preaprobado       cogni save 💾
 ```
-*Sintetiza automáticamente el `README.md` / `package.json` registrando la firma inicial de arquitectura.*
 
-### 2. Guardar Memorias de Decisión o Refactors
-El agente lo hará de forma autónoma, pero también puedes invocarlo manualmente:
+### 1. Inicializar Memoria en un Proyecto Local
 ```bash
-agent-memory save \
+cogni init
+```
+*Crea la carpeta `.cogni/` en el proyecto actual y vincula las memorias a ese repositorio.*
+
+### 2. Guardar una Firma Semántica
+```bash
+cogni save \
   --title "Middleware JWT con RSA256" \
-  --summary "Se configuró el middleware en src/auth.js usando Result Pattern y Zustand." \
+  --summary "Se implementó JWT con RSA256 en internal/auth. Retorna Result[AuthSession]." \
   --category "auth" \
   --tags "auth,jwt,security"
 ```
+*(El tag del proyecto se inyecta automáticamente).*
 
-### 3. Consultar / Buscar Memorias
+### 3. Buscar Memorias con FTS5
 ```bash
-agent-memory search --query "jwt"
+cogni search --query "jwt"
 ```
 
-### 4. Dashboard Visual (UI)
-Explora, busca y administra tus memorias sintéticas en una interfaz dark/glassmorphism:
+### 4. Actualizar una Memoria Existente
 ```bash
-agent-memory ui
+cogni update --id 6 --summary "Nueva versión de la firma sintética..."
 ```
-*Inicia el dashboard local en `http://localhost:3000`.*
 
-### 5. Actualizar el Sistema
-Mantén el CLI, las skills y la BD al día con un solo comando:
+### 5. Eliminar una Memoria
 ```bash
-agent-memory update
+cogni remove --id 6
+```
+
+### 6. Exportar y Compartir Firmas
+```bash
+# Exportar en formato Markdown
+cogni share --format markdown > memorias.md
+
+# Exportar en formato JSON puro
+cogni share --format json
+```
+
+### 7. Dashboard Gráfico Interactivo (Web UI)
+```bash
+cogni ui
+```
+*Inicia el servidor HTTP embebido en un puerto libre (ej. `http://127.0.0.1:3000`) y abre el navegador automáticamente.*
+
+### 8. Estadísticas y Tokens Ahorrados
+```bash
+cogni stats
 ```
 
 ---
 
-## 🏷️ Taxonomía de Tags en 3 Capas
+## 🏷️ Regla de las 3 Capas de Tags
 
-Para garantizar que el agente busque y encuentre la información sin duplicar o perder datos, todas las memorias se organizan en 3 capas de etiquetas:
+Para garantizar una indexación óptima, cada memoria incluye etiquetas en 3 niveles:
 
-1. **Capa 1 - Concepto / Dominio**: Término genérico (`pagination`, `auth`, `state-management`, `database`).
-2. **Capa 2 - Tecnología**: Stack exacto (`sqlite`, `zustand`, `react`, `express`, `css-modules`).
-3. **Capa 3 - Módulo / Entidad**: Pieza específica de tu app (`users-table`, `products-list`, `jwt-middleware`).
-
----
-
-## 🛠️ Arquitectura Técnica
-
-- **Base de Datos Centralizada**: SQLite3 embebida en `~/.agent-memory/memory.db`.
-- **CLI Runtime**: Node.js >= 18 (Binario global `agent-memory`).
-- **Dashboard Visual**: HTTP REST API + Frontend SPA Dark Mode / Glassmorphism.
-- **Compatibilidad Multi-Harness**: Antigravity (`~/.gemini/`), Cursor (`~/.cursor/`), OpenCode (`~/.config/opencode/` & `~/.agents/`), Copilot (`~/.copilot/`), Hermes (`~/.hermes/`).
+1. **Capa 1 - Concepto Principal / Dominio**: Término genérico (`pagination`, `auth`, `state-management`, `api-rest`, `database`).
+2. **Capa 2 - Tecnología / Herramienta**: Stack exacto (`go`, `sqlite`, `zustand`, `react`, `express`, `css-modules`).
+3. **Capa 3 - Módulo / Entidad específica**: Dominio del proyecto (`users-table`, `products-list`, `jwt-middleware`).
 
 ---
 
-## 👨‍💻 Creador & Autor
+## 🏗️ Arquitectura del Repositorio
+
+```text
+cogni/
+├── cmd/cogni/main.go          # Entrypoint de la CLI
+├── internal/
+│   ├── cli/                   # Handlers de comandos (save, search, update, remove, share, ui, init)
+│   ├── core/                  # Entidades de dominio, tags y resolución de proyectos
+│   ├── server/                # Servidor HTTP embebido y APIs REST
+│   └── storage/               # Repositorio SQLite Pure-Go con FTS5
+├── web/                       # Assets estáticos embebidos (HTML/CSS/JS)
+│   ├── embed.go
+│   └── public/
+├── Makefile                   # Tareas de compilación y pruebas
+└── install.sh                 # Instalador universal multi-arnés
+```
+
+---
+
+## 👨‍💻 Autor
 
 Desarrollado y mantenido por **Adelys Alberto** ([@AdelysAlberto](https://github.com/AdelysAlberto)).
 
