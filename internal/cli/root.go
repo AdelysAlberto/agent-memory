@@ -562,7 +562,7 @@ func handleUninstall(args []string) int {
 }
 
 func handleUpgrade(args []string) int {
-	fmt.Println("🔍 Comprobando actualizaciones en GitHub (AdelysAlberto/agent-memory)...")
+	fmt.Println("🔍 Comprobando actualizaciones en GitHub (AdelysAlberto/cogni-memory)...")
 
 	latestTag, releaseURL, err := fetchLatestRelease()
 	if err != nil {
@@ -585,7 +585,7 @@ func handleUpgrade(args []string) int {
 	fmt.Printf("\n🚀 ¡Nueva versión disponible: %s! (%s)\n", latest, releaseURL)
 	fmt.Println("📥 Descargando e instalando actualización...")
 
-	cmd := exec.Command("bash", "-c", "curl -fsSL https://raw.githubusercontent.com/AdelysAlberto/agent-memory/main/install.sh | bash")
+	cmd := exec.Command("bash", "-c", "curl -fsSL https://raw.githubusercontent.com/AdelysAlberto/cogni-memory/main/install.sh | bash")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
@@ -599,7 +599,7 @@ func handleUpgrade(args []string) int {
 
 func fetchLatestRelease() (string, string, error) {
 	client := &http.Client{Timeout: 8 * time.Second}
-	req, err := http.NewRequest("GET", "https://api.github.com/repos/AdelysAlberto/agent-memory/releases/latest", nil)
+	req, err := http.NewRequest("GET", "https://api.github.com/repos/AdelysAlberto/cogni-memory/releases/latest", nil)
 	if err != nil {
 		return "", "", err
 	}

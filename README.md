@@ -22,12 +22,12 @@ Cogni almacena **firmas semánticas sintéticas** en una base de datos **SQLite 
 
 ### Vía Script de Instalación:
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/AdelysAlberto/agent-memory/main/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/AdelysAlberto/cogni-memory/main/install.sh)
 ```
 
 ### O Compilando desde el Repositorio (Go 1.22+):
 ```bash
-git clone https://github.com/AdelysAlberto/agent-memory.git cogni
+git clone https://github.com/AdelysAlberto/cogni-memory.git cogni
 cd cogni
 make install
 ```

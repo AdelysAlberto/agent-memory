@@ -25,7 +25,7 @@ else
         git -C "$SRC_CACHE_DIR" reset --hard --quiet origin/main
     else
         rm -rf "$SRC_CACHE_DIR"
-        git clone --quiet https://github.com/AdelysAlberto/agent-memory.git "$SRC_CACHE_DIR"
+        git clone --quiet https://github.com/AdelysAlberto/cogni-memory.git "$SRC_CACHE_DIR"
     fi
     REPO_DIR="$SRC_CACHE_DIR"
 fi
