@@ -17,7 +17,7 @@ import (
 	"github.com/AdelysAlberto/cogni/internal/storage"
 )
 
-const Version = "2.0.0 (Go Core)"
+const Version = "2.0.1 (Go Core)"
 
 func Execute(args []string) int {
 	if len(args) < 1 {
