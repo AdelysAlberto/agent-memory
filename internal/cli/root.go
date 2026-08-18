@@ -817,8 +817,15 @@ func handleUpgrade(args []string) int {
 	fmt.Printf("• Versión local:  %s\n", current)
 	fmt.Printf("• Versión remota: %s\n", latest)
 
-	if latest == current {
+	cmp := compareSemver(current, latest)
+	if cmp == 0 {
 		fmt.Printf("✨ Ya estás ejecutando la última versión de Cogni (%s).\n", current)
+		return 0
+	}
+
+	if cmp > 0 {
+		fmt.Printf("✨ Tu versión local (%s) es más nueva que la release remota (%s).\n", current, latest)
+		fmt.Println("⏭️ No se realizará actualización para evitar una posible degradación.")
 		return 0
 	}
 
@@ -835,6 +842,48 @@ func handleUpgrade(args []string) int {
 
 	fmt.Printf("🎉 ¡Cogni ha sido actualizado con éxito a la versión %s!\n", latest)
 	return 0
+}
+
+func compareSemver(local, remote string) int {
+	localParts := parseSemver(local)
+	remoteParts := parseSemver(remote)
+
+	for i := 0; i < 3; i++ {
+		if localParts[i] > remoteParts[i] {
+			return 1
+		}
+		if localParts[i] < remoteParts[i] {
+			return -1
+		}
+	}
+
+	return 0
+}
+
+func parseSemver(version string) [3]int {
+	v := strings.TrimSpace(version)
+	v = strings.TrimPrefix(v, "v")
+
+	// Remove build/prerelease suffixes before splitting.
+	for _, sep := range []string{"-", "+", " "} {
+		if idx := strings.Index(v, sep); idx >= 0 {
+			v = v[:idx]
+			break
+		}
+	}
+
+	parts := strings.Split(v, ".")
+	out := [3]int{0, 0, 0}
+
+	for i := 0; i < len(parts) && i < 3; i++ {
+		n, err := strconv.Atoi(parts[i])
+		if err != nil {
+			continue
+		}
+		out[i] = n
+	}
+
+	return out
 }
 
 func fetchLatestRelease() (string, string, error) {
