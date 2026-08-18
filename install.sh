@@ -14,6 +14,19 @@ TARGET_DIR="$HOME_DIR/.cogni"
 BIN_INSTALL_DIR="$HOME_DIR/.local/bin"
 SRC_CACHE_DIR="$HOME_DIR/.cogni-src"
 
+# Detectar sistema operativo una sola vez para todos los módulos
+OS_TYPE="$(uname -s)"
+
+# Retorna el directorio de usuario de VS Code según el OS
+# Linux:  ~/.config/Code/User/
+# macOS:  ~/Library/Application Support/Code/User/
+get_vscode_user_dir() {
+    case "$OS_TYPE" in
+        Darwin) echo "$HOME_DIR/Library/Application Support/Code/User" ;;
+        *)      echo "$HOME_DIR/.config/Code/User" ;;
+    esac
+}
+
 mkdir -p "$TARGET_DIR"
 mkdir -p "$BIN_INSTALL_DIR"
 
@@ -142,12 +155,12 @@ SKILL_SOURCE="$REPO_DIR/SKILL.md"
 
 echo ""
 echo "🤖 Selecciona el entorno o Harness de IA que utilizas:"
-echo "1) Gemini Antigravity (~/.gemini/config/skills/)"
-echo "2) Cursor IDE (~/.cursor/skills/)"
-echo "3) OpenCode (~/.config/opencode/skills/ & ~/.agents/skills/)"
-echo "4) Agentes Estándar / Agentic CLI (~/.agents/skills/)"
-echo "5) GitHub Copilot (~/.copilot/skills/)"
-echo "6) Hermes CLI (~/.hermes/skills/)"
+echo "1) Gemini Antigravity    (~/.gemini/config/skills/cogni/)"
+echo "2) Cursor IDE            (~/.cursor/skills/cogni/)"
+echo "3) OpenCode              (~/.config/opencode/skills/ & ~/.agents/skills/)"
+echo "4) Agentes Estándar      (~/.agents/skills/cogni/)"
+echo "5) GitHub Copilot        (~/.agents/skills/cogni/)  [VS Code / Copilot Chat]"
+echo "6) Hermes CLI            (~/.hermes/skills/cogni/)"
 echo "7) Instalar en TODOS los entornos detectados (Recomendado)"
 echo "8) Omitir instalación de Skill"
 echo ""
@@ -164,49 +177,71 @@ if [ -z "$HARNESS_CHOICE" ]; then
     HARNESS_CHOICE=7
 fi
 
+# ─── Módulo: Gemini Antigravity ─────────────────────────────────────────────
+# Skills:  ~/.gemini/config/skills/<name>/SKILL.md
 install_antigravity() {
-    GEMINI_SKILLS="$HOME_DIR/.gemini/config/skills"
-    echo "  -> Instalando Skill en Gemini Antigravity: $GEMINI_SKILLS"
-    mkdir -p "$GEMINI_SKILLS/cogni" "$GEMINI_SKILLS/agent-memory"
-    cp -f "$SKILL_SOURCE" "$GEMINI_SKILLS/cogni/SKILL.md"
-    cp -f "$SKILL_SOURCE" "$GEMINI_SKILLS/agent-memory/SKILL.md"
+    local skills_dir="$HOME_DIR/.gemini/config/skills"
+    echo "  -> [Gemini Antigravity] Skills: $skills_dir/cogni/"
+    mkdir -p "$skills_dir/cogni" "$skills_dir/agent-memory"
+    cp -f "$SKILL_SOURCE" "$skills_dir/cogni/SKILL.md"
+    cp -f "$SKILL_SOURCE" "$skills_dir/agent-memory/SKILL.md"
 }
 
+# ─── Módulo: Cursor IDE ──────────────────────────────────────────────────────
+# Skills:  ~/.cursor/skills/<name>/SKILL.md
 install_cursor() {
-    CURSOR_SKILLS="$HOME_DIR/.cursor/skills"
-    echo "  -> Instalando Skill en Cursor IDE: $CURSOR_SKILLS"
-    mkdir -p "$CURSOR_SKILLS/cogni"
-    cp -f "$SKILL_SOURCE" "$CURSOR_SKILLS/cogni/SKILL.md"
+    local skills_dir="$HOME_DIR/.cursor/skills"
+    echo "  -> [Cursor IDE] Skills: $skills_dir/cogni/"
+    mkdir -p "$skills_dir/cogni"
+    cp -f "$SKILL_SOURCE" "$skills_dir/cogni/SKILL.md"
 }
 
+# ─── Módulo: OpenCode ────────────────────────────────────────────────────────
+# Skills:  ~/.config/opencode/skills/<name>/SKILL.md
+#          ~/.agents/skills/<name>/SKILL.md
 install_opencode() {
-    OPENCODE_SKILLS_1="$HOME_DIR/.config/opencode/skills"
-    OPENCODE_SKILLS_2="$HOME_DIR/.agents/skills"
-    echo "  -> Instalando Skill en OpenCode: $OPENCODE_SKILLS_1 y $OPENCODE_SKILLS_2"
-    mkdir -p "$OPENCODE_SKILLS_1/cogni" "$OPENCODE_SKILLS_2/cogni"
-    cp -f "$SKILL_SOURCE" "$OPENCODE_SKILLS_1/cogni/SKILL.md"
-    cp -f "$SKILL_SOURCE" "$OPENCODE_SKILLS_2/cogni/SKILL.md"
+    local skills_dir1="$HOME_DIR/.config/opencode/skills"
+    local skills_dir2="$HOME_DIR/.agents/skills"
+    echo "  -> [OpenCode] Skills: $skills_dir1/cogni/ y $skills_dir2/cogni/"
+    mkdir -p "$skills_dir1/cogni" "$skills_dir2/cogni"
+    cp -f "$SKILL_SOURCE" "$skills_dir1/cogni/SKILL.md"
+    cp -f "$SKILL_SOURCE" "$skills_dir2/cogni/SKILL.md"
 }
 
+# ─── Módulo: Agentes Estándar / Agentic CLI ──────────────────────────────────
+# Skills:  ~/.agents/skills/<name>/SKILL.md
 install_agents_std() {
-    STD_SKILLS="$HOME_DIR/.agents/skills"
-    echo "  -> Instalando Skill en Agentes Estándar: $STD_SKILLS"
-    mkdir -p "$STD_SKILLS/cogni"
-    cp -f "$SKILL_SOURCE" "$STD_SKILLS/cogni/SKILL.md"
+    local skills_dir="$HOME_DIR/.agents/skills"
+    echo "  -> [Agentes Estándar] Skills: $skills_dir/cogni/"
+    mkdir -p "$skills_dir/cogni"
+    cp -f "$SKILL_SOURCE" "$skills_dir/cogni/SKILL.md"
 }
 
+# ─── Módulo: GitHub Copilot (VS Code) ────────────────────────────────────────
+# Skills:      ~/.agents/skills/<name>/SKILL.md          (mismo en Linux y macOS)
+# [Futuro] Prompts/Commands:   <vscode_user_dir>/prompts/<name>.prompt.md
+# [Futuro] Instrucciones:      <vscode_user_dir>/prompts/<name>.instructions.md
+# [Futuro] Agentes globales:   <vscode_user_dir>/prompts/<name>.agent.md
 install_copilot() {
-    COPILOT_SKILLS="$HOME_DIR/.copilot/skills"
-    echo "  -> Instalando Skill en GitHub Copilot: $COPILOT_SKILLS"
-    mkdir -p "$COPILOT_SKILLS/cogni"
-    cp -f "$SKILL_SOURCE" "$COPILOT_SKILLS/cogni/SKILL.md"
+    local skills_dir="$HOME_DIR/.agents/skills"
+    local vscode_dir
+    vscode_dir="$(get_vscode_user_dir)"
+
+    echo "  -> [GitHub Copilot] OS: $OS_TYPE"
+    echo "     Skills:    $skills_dir/cogni/SKILL.md"
+    echo "     VS Code:   $vscode_dir  (prompts/agents/instructions — uso futuro)"
+
+    mkdir -p "$skills_dir/cogni"
+    cp -f "$SKILL_SOURCE" "$skills_dir/cogni/SKILL.md"
 }
 
+# ─── Módulo: Hermes CLI ──────────────────────────────────────────────────────
+# Skills:  ~/.hermes/skills/<name>/SKILL.md
 install_hermes() {
-    HERMES_SKILLS="$HOME_DIR/.hermes/skills"
-    echo "  -> Instalando Skill en Hermes CLI: $HERMES_SKILLS"
-    mkdir -p "$HERMES_SKILLS/cogni"
-    cp -f "$SKILL_SOURCE" "$HERMES_SKILLS/cogni/SKILL.md"
+    local skills_dir="$HOME_DIR/.hermes/skills"
+    echo "  -> [Hermes CLI] Skills: $skills_dir/cogni/"
+    mkdir -p "$skills_dir/cogni"
+    cp -f "$SKILL_SOURCE" "$skills_dir/cogni/SKILL.md"
 }
 
 case $HARNESS_CHOICE in
