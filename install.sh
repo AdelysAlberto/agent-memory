@@ -32,18 +32,108 @@ else
     REPO_DIR="$SRC_CACHE_DIR"
 fi
 
-# Compilación / Instalación del binario Go
-if command -v go &> /dev/null; then
+# Detectar OS y arquitectura para descarga de binario precompilado
+detect_platform() {
+    local os arch
+    os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+    arch="$(uname -m)"
+    case "$arch" in
+        x86_64)  arch="amd64" ;;
+        aarch64|arm64) arch="arm64" ;;
+        armv7l)  arch="arm" ;;
+        *)       arch="$arch" ;;
+    esac
+    echo "${os}_${arch}"
+}
+
+# Intentar instalar Go automáticamente según la distro
+try_install_go() {
+    echo "🔍 Go no encontrado. Intentando instalarlo automáticamente..."
+
+    if command -v snap &>/dev/null; then
+        echo "📦 Instalando Go vía snap (se puede requerir contraseña)..."
+        sudo snap install go --classic && return 0
+    fi
+
+    if command -v apt-get &>/dev/null; then
+        echo "📦 Instalando Go vía apt (se puede requerir contraseña)..."
+        sudo apt-get update -qq && sudo apt-get install -y golang-go && return 0
+    fi
+
+    if command -v dnf &>/dev/null; then
+        echo "📦 Instalando Go vía dnf (se puede requerir contraseña)..."
+        sudo dnf install -y golang && return 0
+    fi
+
+    if command -v pacman &>/dev/null; then
+        echo "📦 Instalando Go vía pacman (se puede requerir contraseña)..."
+        sudo pacman -S --noconfirm go && return 0
+    fi
+
+    if command -v brew &>/dev/null; then
+        echo "📦 Instalando Go vía Homebrew..."
+        brew install go && return 0
+    fi
+
+    return 1
+}
+
+# 1. Intentar descargar binario precompilado desde GitHub Releases
+PLATFORM="$(detect_platform)"
+LATEST_RELEASE_URL="https://github.com/AdelysAlberto/cogni-memory/releases/latest/download/cogni_${PLATFORM}"
+
+echo "🔍 Buscando binario precompilado para $PLATFORM..."
+if curl -fsSL --head "$LATEST_RELEASE_URL" &>/dev/null; then
+    echo "⬇️  Descargando binario precompilado para $PLATFORM..."
+    curl -fsSL "$LATEST_RELEASE_URL" -o "$BIN_INSTALL_DIR/cogni"
+    chmod +x "$BIN_INSTALL_DIR/cogni"
+    echo "✅ Binario instalado en $BIN_INSTALL_DIR/cogni"
+
+# 2. Compilar si Go está disponible
+elif command -v go &>/dev/null; then
     echo "🔨 Compilando binario de Cogni en Go..."
     (cd "$REPO_DIR" && go build -ldflags="-s -w" -o "$BIN_INSTALL_DIR/cogni" ./cmd/cogni)
     chmod +x "$BIN_INSTALL_DIR/cogni"
     echo "✅ Binario instalado en $BIN_INSTALL_DIR/cogni"
+
+# 3. Copiar binario incluido en el repo si existe
 elif [ -f "$REPO_DIR/bin/cogni" ]; then
-    echo "📦 Copiando binario precompilado..."
+    echo "📦 Copiando binario precompilado del repositorio..."
     cp "$REPO_DIR/bin/cogni" "$BIN_INSTALL_DIR/cogni"
     chmod +x "$BIN_INSTALL_DIR/cogni"
+
+# 4. Intentar instalar Go automáticamente y compilar
+elif try_install_go; then
+    # Refrescar PATH por si snap/apt lo añadió
+    export PATH="$PATH:/snap/bin:/usr/local/go/bin"
+    if command -v go &>/dev/null; then
+        echo "🔨 Compilando binario de Cogni en Go..."
+        (cd "$REPO_DIR" && go build -ldflags="-s -w" -o "$BIN_INSTALL_DIR/cogni" ./cmd/cogni)
+        chmod +x "$BIN_INSTALL_DIR/cogni"
+        echo "✅ Binario instalado en $BIN_INSTALL_DIR/cogni"
+    else
+        echo "⚠️  Go fue instalado pero requiere reiniciar la terminal."
+        echo "   Ejecuta de nuevo el instalador tras abrir una nueva terminal."
+        exit 1
+    fi
+
+# 5. Nada funcionó — guiar al usuario
 else
-    echo "❌ Error: Se requiere Go (golang >= 1.22) instalado para compilar Cogni."
+    echo ""
+    echo "❌ No se pudo instalar Cogni automáticamente."
+    echo ""
+    echo "   Cogni requiere Go >= 1.22. Instálalo con uno de estos métodos:"
+    echo ""
+    echo "   Ubuntu/Debian:   sudo snap install go --classic"
+    echo "                 o  sudo apt install golang-go"
+    echo "   Fedora/RHEL:     sudo dnf install golang"
+    echo "   Arch Linux:      sudo pacman -S go"
+    echo "   macOS:           brew install go"
+    echo "   Manual:          https://go.dev/dl/"
+    echo ""
+    echo "   Luego vuelve a ejecutar:"
+    echo "   bash <(curl -fsSL https://raw.githubusercontent.com/AdelysAlberto/cogni-memory/main/install.sh)"
+    echo ""
     exit 1
 fi
 
