@@ -296,7 +296,7 @@ esac
 # Inicializar base de datos global
 echo ""
 echo "🗄️ Inicializando almacenamiento SQLite de Cogni..."
-"$BIN_INSTALL_DIR/cogni" init --global
+"$BIN_INSTALL_DIR/cogni" init --global --no-skills
 
 echo ""
 echo "✅ [Cogni] ¡Instalación completada con éxito!"
