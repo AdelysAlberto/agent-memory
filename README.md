@@ -19,7 +19,7 @@
 ---
 
 <blockquote align="center">
-  <h3>⚡ <i>"Así como el Byte es la unidad de datos, Cogni es la unidad de conocimiento sintético de tu agente."</i></h3>
+  <h4>⚡ <i>"Así como el Byte es la unidad de datos, Cogni es la unidad de conocimiento sintético de tu agente."</i></h4>
 </blockquote>
 
 ---
@@ -56,18 +56,22 @@ Es compatible de forma nativa con **Gemini Antigravity**, **Cursor IDE**, **GitH
 
 ## 🛠️ Instalación Rápida
 
-### 1. Vía Script de Instalación Universal (Recomendado):
+### 1. Vía Script de Instalación Universal (Recomendado)
+
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/AdelysAlberto/cogni-memory/main/install.sh)
 ```
+
 *El script detectará automáticamente los arneses de IA instalados (`.gemini`, `.cursor`, `.agents`, `.copilot`, `.opencode`, `.hermes`) y registrará la skill de Cogni.*
 
-### 2. Compilando desde el Código Fuente (Go 1.22+):
+### 2. Compilando desde el Código Fuente (Go 1.22+)
+
 ```bash
 git clone https://github.com/AdelysAlberto/cogni-memory.git cogni
 cd cogni
 make install
 ```
+
 *El binario quedará listo en `$HOME/.local/bin/cogni`.*
 
 ---
@@ -98,7 +102,9 @@ make install
 Todo agente integrado con Cogni sigue el estándar **WHEN TO SAVE / WHEN TO SEARCH**:
 
 ### 1. Disparadores Obligatorios de Guardado (`cogni save`)
+
 El agente debe guardar memoria INMEDIATAMENTE tras:
+
 * 🐛 **bugfix**: Solución a un error o bug no trivial.
 * 📐 **architecture / decision**: Elección de librerías, modelo de datos o diseño de sistema.
 * 💡 **discovery**: Descubrimiento no obvio sobre el comportamiento del sistema.
@@ -107,11 +113,13 @@ El agente debe guardar memoria INMEDIATAMENTE tras:
 * 👤 **preference**: Restricción o preferencia explicada por el usuario.
 
 ### 2. Estructura Sintética Obligatoria (`--summary`)
+
 ```text
 What: <Qué se hizo en 1 oración> | Why: <Motivación o causa raíz> | Where: <Archivos/rutas clave> | Learned: <Gotchas o hallazgos>
 ```
 
 ### 3. Notificaciones Visuales en Chat
+
 * **Al Recuperar**: `🧠 **Memoria Recuperada**: [<proyecto>] "<titulo_o_tema>" (Tags: #tag1, #tag2)`
 * **Al Guardar**: `💾 **Memoria Guardada**: [<proyecto>] "<titulo_breve>" (Category: #category, Tags: #tag1, #tag2)`
 
