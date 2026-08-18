@@ -802,11 +802,11 @@ func handleUninstall(args []string) int {
 }
 
 func handleUpgrade(args []string) int {
-	fmt.Println("🔍 Comprobando actualizaciones en GitHub (AdelysAlberto/cogni-memory)...")
+	fmt.Println("🔍 Comprobando actualizaciones por tags en GitHub (AdelysAlberto/cogni-memory)...")
 
-	latestTag, releaseURL, err := fetchLatestRelease()
+	latestTag, releaseURL, err := fetchLatestTag()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "⚠️ No se pudo comprobar la versión remota: %v\n", err)
+		fmt.Fprintf(os.Stderr, "⚠️ No se pudo comprobar la última tag remota: %v\n", err)
 		return 1
 	}
 
@@ -824,7 +824,7 @@ func handleUpgrade(args []string) int {
 	}
 
 	if cmp > 0 {
-		fmt.Printf("✨ Tu versión local (%s) es más nueva que la release remota (%s).\n", current, latest)
+		fmt.Printf("✨ Tu versión local (%s) es más nueva que la tag remota (%s).\n", current, latest)
 		fmt.Println("⏭️ No se realizará actualización para evitar una posible degradación.")
 		return 0
 	}
@@ -886,31 +886,76 @@ func parseSemver(version string) [3]int {
 	return out
 }
 
-func fetchLatestRelease() (string, string, error) {
+func isStrictSemverTag(tag string) bool {
+	v := strings.TrimSpace(strings.TrimPrefix(tag, "v"))
+	parts := strings.Split(v, ".")
+	if len(parts) != 3 {
+		return false
+	}
+
+	for _, p := range parts {
+		if p == "" {
+			return false
+		}
+		if _, err := strconv.Atoi(p); err != nil {
+			return false
+		}
+	}
+
+	return true
+}
+
+func fetchLatestTag() (string, string, error) {
 	client := &http.Client{Timeout: 8 * time.Second}
-	req, err := http.NewRequest("GET", "https://api.github.com/repos/AdelysAlberto/cogni-memory/releases/latest", nil)
-	if err != nil {
-		return "", "", err
-	}
-	req.Header.Set("User-Agent", "Cogni-CLI")
+	bestTag := ""
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", "", err
-	}
-	defer resp.Body.Close()
+	for page := 1; page <= 3; page++ {
+		url := fmt.Sprintf("https://api.github.com/repos/AdelysAlberto/cogni-memory/tags?per_page=100&page=%d", page)
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return "", "", err
+		}
+		req.Header.Set("User-Agent", "Cogni-CLI")
 
-	if resp.StatusCode != http.StatusOK {
-		return "", "", fmt.Errorf("código HTTP %d recibido de GitHub", resp.StatusCode)
+		resp, err := client.Do(req)
+		if err != nil {
+			return "", "", err
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			return "", "", fmt.Errorf("código HTTP %d recibido de GitHub", resp.StatusCode)
+		}
+
+		var tags []struct {
+			Name string `json:"name"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&tags); err != nil {
+			resp.Body.Close()
+			return "", "", err
+		}
+		resp.Body.Close()
+
+		if len(tags) == 0 {
+			break
+		}
+
+		for _, t := range tags {
+			candidate := "v" + strings.TrimPrefix(strings.TrimSpace(t.Name), "v")
+			if !isStrictSemverTag(candidate) {
+				continue
+			}
+
+			if bestTag == "" || compareSemver(candidate, bestTag) > 0 {
+				bestTag = candidate
+			}
+		}
 	}
 
-	var data struct {
-		TagName string `json:"tag_name"`
-		HTMLURL string `json:"html_url"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return "", "", err
+	if bestTag == "" {
+		return "", "", fmt.Errorf("no se encontraron tags semánticas válidas")
 	}
 
-	return data.TagName, data.HTMLURL, nil
+	releaseURL := fmt.Sprintf("https://github.com/AdelysAlberto/cogni-memory/releases/tag/%s", bestTag)
+	return bestTag, releaseURL, nil
 }
