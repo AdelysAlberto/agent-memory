@@ -105,8 +105,9 @@ if curl -fsSL --head "$LATEST_RELEASE_URL" &>/dev/null; then
 
 # 2. Compilar si Go está disponible
 elif command -v go &>/dev/null; then
-    echo "🔨 Compilando binario de Cogni en Go..."
-    (cd "$REPO_DIR" && go build -ldflags="-s -w" -o "$BIN_INSTALL_DIR/cogni" ./cmd/cogni)
+    VERSION_TAG="$(git -C "$REPO_DIR" describe --tags --abbrev=0 2>/dev/null || echo "v2.0.3")"
+    echo "🔨 Compilando binario de Cogni en Go ($VERSION_TAG)..."
+    (cd "$REPO_DIR" && go build -ldflags="-s -w -X github.com/AdelysAlberto/cogni/internal/cli.Version=${VERSION_TAG}" -o "$BIN_INSTALL_DIR/cogni" ./cmd/cogni)
     chmod +x "$BIN_INSTALL_DIR/cogni"
     echo "✅ Binario instalado en $BIN_INSTALL_DIR/cogni"
 
@@ -121,8 +122,9 @@ elif try_install_go; then
     # Refrescar PATH por si snap/apt lo añadió
     export PATH="$PATH:/snap/bin:/usr/local/go/bin"
     if command -v go &>/dev/null; then
-        echo "🔨 Compilando binario de Cogni en Go..."
-        (cd "$REPO_DIR" && go build -ldflags="-s -w" -o "$BIN_INSTALL_DIR/cogni" ./cmd/cogni)
+        VERSION_TAG="$(git -C "$REPO_DIR" describe --tags --abbrev=0 2>/dev/null || echo "v2.0.3")"
+        echo "🔨 Compilando binario de Cogni en Go ($VERSION_TAG)..."
+        (cd "$REPO_DIR" && go build -ldflags="-s -w -X github.com/AdelysAlberto/cogni/internal/cli.Version=${VERSION_TAG}" -o "$BIN_INSTALL_DIR/cogni" ./cmd/cogni)
         chmod +x "$BIN_INSTALL_DIR/cogni"
         echo "✅ Binario instalado en $BIN_INSTALL_DIR/cogni"
     else

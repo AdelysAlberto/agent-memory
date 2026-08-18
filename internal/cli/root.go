@@ -18,7 +18,7 @@ import (
 	"github.com/AdelysAlberto/cogni/internal/storage"
 )
 
-const Version = "2.0.1 (Go Core)"
+var Version = "dev"
 
 func Execute(args []string) int {
 	if len(args) < 1 {
@@ -62,7 +62,7 @@ func Execute(args []string) int {
 	case "uninstall":
 		return handleUninstall(cmdArgs)
 	case "version", "--version", "-v":
-		fmt.Printf("🧠 Cogni v%s\n", Version)
+		fmt.Printf("🧠 Cogni %s\n", "v"+strings.TrimPrefix(Version, "v"))
 		return 0
 	case "help", "--help", "-h":
 		printUsage()
@@ -811,7 +811,7 @@ func handleUpgrade(args []string) int {
 	}
 
 	current := "v" + strings.TrimPrefix(Version, "v")
-	current = strings.Split(current, " ")[0] // Clean extra suffixes if any
+	current = strings.Fields(current)[0] // Clean extra suffixes if any
 	latest := "v" + strings.TrimPrefix(latestTag, "v")
 
 	fmt.Printf("• Versión local:  %s\n", current)

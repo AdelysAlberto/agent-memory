@@ -199,9 +199,29 @@ cogni-memory/
 │   ├── embed.go
 │   └── public/
 ├── SKILL.md                   # Especificación canónica de la Skill para Agentes de IA
-├── Makefile                   # Tareas de compilación, testeo e instalación
+├── Makefile                   # Tareas de compilación, testeo, instalación y releases
+├── release.sh                 # Script automatizado de tags y releases (patch / minor / major)
 └── install.sh                 # Instalador universal multi-arnés de IA
 ```
+
+---
+
+## 🛠️ Desarrollo y Release de Versiones
+
+El sistema de versiones es **centralizado por Tag de Git y `-ldflags`**. Para generar una nueva versión desde desarrollo:
+
+```bash
+# Incrementar versión PATCH (ej: v2.0.3 -> v2.0.4)
+make release-patch
+
+# Incrementar versión MINOR (ej: v2.0.3 -> v2.1.0)
+make release-minor
+
+# Incrementar versión MAJOR (ej: v2.0.3 -> v3.0.0)
+make release-major
+```
+
+El comando automatiza la compilación con la versión exacta inyectada en Go, crea la `git tag`, hace el `git push` a GitHub y (si tienes el `gh` CLI instalado) sube el Release a GitHub con su binario correspondiente.
 
 ---
 
