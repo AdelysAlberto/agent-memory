@@ -50,29 +50,30 @@ detect_platform() {
 try_install_go() {
     echo "🔍 Go no encontrado. Intentando instalarlo automáticamente..."
 
+    # Usar if/then en lugar de && para que set -e no interrumpa el script si falla
     if command -v snap &>/dev/null; then
         echo "📦 Instalando Go vía snap (se puede requerir contraseña)..."
-        sudo snap install go --classic && return 0
+        if sudo snap install go --classic 2>/dev/null; then return 0; fi
     fi
 
     if command -v apt-get &>/dev/null; then
         echo "📦 Instalando Go vía apt (se puede requerir contraseña)..."
-        sudo apt-get update -qq && sudo apt-get install -y golang-go && return 0
+        if sudo apt-get update -qq && sudo apt-get install -y golang-go 2>/dev/null; then return 0; fi
     fi
 
     if command -v dnf &>/dev/null; then
         echo "📦 Instalando Go vía dnf (se puede requerir contraseña)..."
-        sudo dnf install -y golang && return 0
+        if sudo dnf install -y golang 2>/dev/null; then return 0; fi
     fi
 
     if command -v pacman &>/dev/null; then
         echo "📦 Instalando Go vía pacman (se puede requerir contraseña)..."
-        sudo pacman -S --noconfirm go && return 0
+        if sudo pacman -S --noconfirm go 2>/dev/null; then return 0; fi
     fi
 
     if command -v brew &>/dev/null; then
         echo "📦 Instalando Go vía Homebrew..."
-        brew install go && return 0
+        if brew install go 2>/dev/null; then return 0; fi
     fi
 
     return 1
