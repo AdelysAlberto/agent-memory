@@ -64,6 +64,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/AdelysAlberto/cogni-memory/m
 
 *El script detectará automáticamente los arneses de IA instalados (`.gemini`, `.cursor`, `.agents`, `.copilot`, `.opencode`, `.hermes`) y registrará la skill de Cogni.*
 
+*Para GitHub Copilot en VS Code, además de la skill, el instalador crea una instrucción global en `~/.config/Code/User/prompts/cogni-copilot.instructions.md` (Linux) o `~/Library/Application Support/Code/User/prompts/cogni-copilot.instructions.md` (macOS) para reforzar búsqueda/guardado obligatorio cuando el CLI `cogni` está disponible.*
+
 ### 2. Compilando desde el Código Fuente (Go 1.22+)
 
 ```bash
@@ -122,6 +124,16 @@ What: <Qué se hizo en 1 oración> | Why: <Motivación o causa raíz> | Where: <
 
 * **Al Recuperar**: `🧠 **Memoria Recuperada**: [<proyecto>] "<titulo_o_tema>" (Tags: #tag1, #tag2)`
 * **Al Guardar**: `💾 **Memoria Guardada**: [<proyecto>] "<titulo_breve>" (Category: #category, Tags: #tag1, #tag2)`
+
+### 4. Nota Importante sobre Copilot (VS Code)
+
+En Copilot, una *skill* no siempre se invoca automáticamente por sí sola en cada respuesta. Para reducir omisiones:
+
+* Se instala la skill en rutas actuales y legacy (`~/.agents/skills/cogni/` y `~/.copilot/skills/cogni/`).
+* Se instala una instrucción de enforcement en prompts de usuario para exigir:
+  * búsqueda previa en bugfix no trivial,
+  * guardado/actualización antes de la respuesta final,
+  * confirmación visible de memoria guardada o fallo explícito.
 
 ---
 

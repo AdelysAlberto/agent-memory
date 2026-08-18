@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -182,7 +183,7 @@ func promptAndInstallSkills(autoAll bool) {
 		fmt.Println("3) Cursor IDE (~/.cursor/skills/)")
 		fmt.Println("4) Claude Code / Desktop (~/.claude/skills/)")
 		fmt.Println("5) OpenCode (~/.config/opencode/skills/ & ~/.agents/skills/)")
-		fmt.Println("6) GitHub Copilot (~/.copilot/skills/)")
+		fmt.Println("6) GitHub Copilot (~/.agents/skills/ & ~/.copilot/skills/)")
 		fmt.Println("7) Hermes CLI (~/.hermes/skills/)")
 		fmt.Println("8) Instalar en TODOS los entornos detectados (Recomendado)")
 		fmt.Println("9) Omitir instalación de Skill")
@@ -766,6 +767,23 @@ func handleUninstall(args []string) int {
 		if _, err := os.Stat(p); err == nil {
 			_ = os.RemoveAll(p)
 			fmt.Printf("  -> Skill eliminada: %s\n", p)
+		}
+	}
+
+	// 2.1 Remove Copilot instructions installed in VS Code user prompts
+	vscodeInstructionPaths := []string{
+		filepath.Join(home, ".config", "Code", "User", "prompts", "cogni-copilot.instructions.md"),
+	}
+	if runtime.GOOS == "darwin" {
+		vscodeInstructionPaths = append(vscodeInstructionPaths,
+			filepath.Join(home, "Library", "Application Support", "Code", "User", "prompts", "cogni-copilot.instructions.md"),
+		)
+	}
+
+	for _, p := range vscodeInstructionPaths {
+		if _, err := os.Stat(p); err == nil {
+			_ = os.Remove(p)
+			fmt.Printf("  -> Instrucción Copilot eliminada: %s\n", p)
 		}
 	}
 

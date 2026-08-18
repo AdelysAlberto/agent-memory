@@ -21,12 +21,20 @@ Its primary objective is to maintain architectural consistency across chat sessi
   ```bash
   cogni search --query "<concept_or_topic>"
   ```
+- **Pre-fix Search (Mandatory for non-trivial bugfixes)**: Before implementing a non-trivial bugfix, execute at least one targeted search for the failing area (error, module, or stack trace keyword).
 - If a relevant previous signature exists, **adopt and adhere to the same technical pattern**, conventions, and previously approved architectural decisions.
 - **MANDATORY CHAT NOTIFICATION ON RETRIEVAL**: When retrieved memories influence your response, append a 1-line confirmation:
   `🧠 **Memoria Recuperada**: [<project_name>] "<retrieved_title_or_topic>" (Tags: #tag1, #tag2)`
 
+### 1.1 Copilot/Agent Enforcement (No Silent Substitution)
+- If `cogni` CLI is available, **do not substitute** Cogni operations with internal agent memory systems (`memory.create`, hidden notes, scratchpad-only memory).
+- Internal memory can be used only as a temporary buffer, never as the final persistence layer for high-signal events.
+- If CLI is unavailable or fails, explicitly disclose fallback in chat with the reason and exact failed command.
+
 ### 2. When to Save & High-Signal Threshold (Mandatory Triggers)
 **GOLDEN RULE**: Call `cogni save` ONLY if the answer is YES to: *If this memory signature does not exist in the future, will an agent waste time investigating, break an architecture, or make a mistake?*
+
+**MANDATORY TIMING**: For high-signal events, save/update memory **before** sending the final answer to the user.
 
 **DO NOT SAVE (Noise / Skip)**:
 - ❌ Trivial metadata tasks (creating/modifying `LICENSE`, `.gitignore`, `.prettierrc`, cosmetic assets).
@@ -60,6 +68,9 @@ EVERY saved memory signature MUST include 3 to 5 kebab-case tags organized into 
 ### 6. Auto-Save & Visual Chat Notification 💾
 When saving or updating a memory signature, always append a 1-line confirmation at the very end of your response:
 `💾 **Memoria Guardada**: [<project_name>] "<brief_title>" (Category: #category, Tags: #tag1, #tag2, #tag3)`
+
+If save/update could not be completed, append a 1-line failure disclosure instead:
+`⚠️ **Memoria No Guardada**: <reason> (Attempted: <command>)`
 
 ---
 

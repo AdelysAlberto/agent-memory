@@ -6,6 +6,8 @@ echo "🗑️ Desinstalando Cogni..."
 
 HOME_DIR="$HOME"
 BIN_PATH="$HOME_DIR/.local/bin/cogni"
+VSCODE_PROMPTS_LINUX="$HOME_DIR/.config/Code/User/prompts/cogni-copilot.instructions.md"
+VSCODE_PROMPTS_MACOS="$HOME_DIR/Library/Application Support/Code/User/prompts/cogni-copilot.instructions.md"
 
 if [ -f "$BIN_PATH" ]; then
     rm -f "$BIN_PATH"
@@ -18,6 +20,7 @@ rm -rf "$HOME_DIR/.cursor/skills/cogni" "$HOME_DIR/.cursor/skills/agent-memory"
 rm -rf "$HOME_DIR/.config/opencode/skills/cogni" "$HOME_DIR/.agents/skills/cogni"
 rm -rf "$HOME_DIR/.copilot/skills/cogni"
 rm -rf "$HOME_DIR/.hermes/skills/cogni"
+rm -f "$VSCODE_PROMPTS_LINUX" "$VSCODE_PROMPTS_MACOS"
 
 echo ""
 read -p "¿Deseas eliminar también las bases de datos de memoria en ~/.cogni? (s/N): " REMOVE_DB || true

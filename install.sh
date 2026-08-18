@@ -218,21 +218,51 @@ install_agents_std() {
 }
 
 # ─── Módulo: GitHub Copilot (VS Code) ────────────────────────────────────────
-# Skills:      ~/.agents/skills/<name>/SKILL.md          (mismo en Linux y macOS)
-# [Futuro] Prompts/Commands:   <vscode_user_dir>/prompts/<name>.prompt.md
-# [Futuro] Instrucciones:      <vscode_user_dir>/prompts/<name>.instructions.md
-# [Futuro] Agentes globales:   <vscode_user_dir>/prompts/<name>.agent.md
+# Skills:      ~/.agents/skills/<name>/SKILL.md          (runtime principal)
+# Skills (compat): ~/.copilot/skills/<name>/SKILL.md     (legacy)
+# Instrucciones: <vscode_user_dir>/prompts/cogni-copilot.instructions.md
 install_copilot() {
     local skills_dir="$HOME_DIR/.agents/skills"
+    local legacy_skills_dir="$HOME_DIR/.copilot/skills"
     local vscode_dir
+    local prompts_dir
+    local copilot_instruction_file
     vscode_dir="$(get_vscode_user_dir)"
+    prompts_dir="$vscode_dir/prompts"
+    copilot_instruction_file="$prompts_dir/cogni-copilot.instructions.md"
 
     echo "  -> [GitHub Copilot] OS: $OS_TYPE"
     echo "     Skills:    $skills_dir/cogni/SKILL.md"
-    echo "     VS Code:   $vscode_dir  (prompts/agents/instructions — uso futuro)"
+    echo "     Skills(L): $legacy_skills_dir/cogni/SKILL.md"
+    echo "     Rules:     $copilot_instruction_file"
 
-    mkdir -p "$skills_dir/cogni"
+    mkdir -p "$skills_dir/cogni" "$legacy_skills_dir/cogni" "$prompts_dir"
     cp -f "$SKILL_SOURCE" "$skills_dir/cogni/SKILL.md"
+    cp -f "$SKILL_SOURCE" "$legacy_skills_dir/cogni/SKILL.md"
+
+    cat > "$copilot_instruction_file" <<'EOF'
+---
+description: "Cogni enforcement for GitHub Copilot when CLI is available"
+applyTo: "**"
+---
+
+# Cogni Enforcement (Copilot)
+
+When `cogni` CLI is available in PATH:
+
+1. Before any non-trivial bugfix, run at least one targeted lookup:
+    - `cogni search --query "<error-or-module-keyword>"`
+2. For high-signal outcomes (bugfix, architecture, decision, discovery, config, pattern, preference), persist memory before final response:
+    - `cogni save ...` or `cogni update --id ...`
+3. Do not replace Cogni persistence with internal memory-only systems (e.g., `memory.create`) as final storage.
+4. End-user response must include one of these 1-line confirmations:
+    - `🧠 Memoria Recuperada: [project] "title/topic" (Tags: #tag1, #tag2)`
+    - `💾 Memoria Guardada: [project] "title" (Category: #category, Tags: #tag1, #tag2, #tag3)`
+5. If save/update fails, disclose explicitly:
+    - `⚠️ Memoria No Guardada: <reason> (Attempted: <command>)`
+
+If `cogni` CLI is not available, explain it and provide the exact install/enable step.
+EOF
 }
 
 # ─── Módulo: Hermes CLI ──────────────────────────────────────────────────────
