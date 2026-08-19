@@ -280,6 +280,17 @@ func handleSave(args []string) int {
 		projectName = core.DetectProjectName()
 	}
 
+	if !*global && *dbPath == "" && core.FindLocalCogniDir() == "" {
+		fmt.Println("⚠️  No se encontró .cogni/ local en este proyecto.")
+		fmt.Println("   Ejecutaré 'cogni init' para inicializar el almacén local del proyecto.")
+		localDir := filepath.Join(".", ".cogni")
+		if err := os.MkdirAll(localDir, 0755); err != nil {
+			fmt.Fprintf(os.Stderr, "Error creando directorio .cogni: %v\n", err)
+			return 1
+		}
+		fmt.Printf("✅ Almacén local inicializado en: %s\n", localDir)
+	}
+
 	formattedTags := core.FormatTags(*tags, projectName)
 
 	s, err := getStorage(*dbPath, *global)
