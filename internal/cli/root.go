@@ -122,6 +122,7 @@ func handleInit(args []string) int {
 	fs := flag.NewFlagSet("init", flag.ExitOnError)
 	forceGlobal := fs.Bool("global", false, "Inicializa la base de datos global en ~/.cogni")
 	noSkills := fs.Bool("no-skills", false, "Omitir instalación de skills de IA")
+	withSkills := fs.Bool("skills", false, "Instalar skills de IA (requerido explícito en init local)")
 	allSkills := fs.Bool("all", false, "Instalar automáticamente en todos los arneses de IA")
 	_ = fs.Parse(args)
 
@@ -158,7 +159,16 @@ func handleInit(args []string) int {
 		fmt.Printf("💡 Proyecto detectado: %s\n", core.DetectProjectName())
 	}
 
-	if !*noSkills {
+	// Skills: en init local solo se instalan si se pide explícitamente (--skills o --all)
+	// En init global se instalan por defecto salvo --no-skills
+	shouldInstallSkills := false
+	if *forceGlobal {
+		shouldInstallSkills = !*noSkills
+	} else {
+		shouldInstallSkills = (*withSkills || *allSkills) && !*noSkills
+	}
+
+	if shouldInstallSkills {
 		promptAndInstallSkills(*allSkills)
 	}
 
