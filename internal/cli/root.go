@@ -82,7 +82,7 @@ Uso:
   cogni <comando> [argumentos...]
 
 Comandos Principales:
-  init        Inicializa el directorio local .cogni/ en el proyecto actual
+  init        Inicializa Cogni globalmente (~/.cogni/) e instala skills de IA
   save        Guarda una firma de memoria sintética
   search      Busca firmas de memoria con FTS5 (local y global federado)
   update      Actualiza una memoria existente por su ID
@@ -96,13 +96,20 @@ Comandos Principales:
   uninstall   Desinstala Cogni, elimina el binario y limpia las skills
   version     Muestra la versión de Cogni
 
+Flags de init:
+  --project   Inicializa solo el almacén local (.cogni/) en el proyecto actual, sin instalar skills
+  --all       Instala las skills en todos los arneses de IA sin preguntar
+  --no-skills Omitir instalación de skills de IA (solo init global)
+
 Flags Globales:
-  --global  Fuerza el uso de la base de datos global (~/.cogni/memory.db)
-  --db      Ruta personalizada al archivo SQLite
-  --json    Imprime la salida en formato JSON puro
+  --db        Ruta personalizada al archivo SQLite
+  --json      Imprime la salida en formato JSON puro
 
 Ejemplos:
-  cogni init
+  cogni init                   # Instala cogni global + configura skills de IA
+  cogni init --all             # Instala cogni global + skills en todos los arneses
+  cogni init --no-skills       # Instala cogni global sin configurar skills
+  cogni init --project         # Inicializa memoria local del proyecto actual
   cogni save --title "Auth JWT" --summary "Firma sintética..." --category auth --tags "jwt,tokens"
   cogni search --query "jwt"
   cogni update --id 6 --summary "Nueva firma..."
@@ -120,13 +127,30 @@ func getStorage(customPath string, forceGlobal bool) (*storage.Storage, error) {
 
 func handleInit(args []string) int {
 	fs := flag.NewFlagSet("init", flag.ExitOnError)
-	forceGlobal := fs.Bool("global", false, "Inicializa la base de datos global en ~/.cogni")
+	project  := fs.Bool("project", false, "Inicializa el almacén local (.cogni/) en el proyecto actual")
 	noSkills := fs.Bool("no-skills", false, "Omitir instalación de skills de IA")
-	withSkills := fs.Bool("skills", false, "Instalar skills de IA (requerido explícito en init local)")
 	allSkills := fs.Bool("all", false, "Instalar automáticamente en todos los arneses de IA")
+	// --global mantenido como alias de retrocompatibilidad (comportamiento idéntico al default)
+	_ = fs.Bool("global", false, "")
 	_ = fs.Parse(args)
 
-	if *forceGlobal {
+	if *project {
+		localDir := filepath.Join(".", ".cogni")
+		if err := os.MkdirAll(localDir, 0755); err != nil {
+			fmt.Fprintf(os.Stderr, "Error creando directorio .cogni: %v\n", err)
+			return 1
+		}
+		dbPath := filepath.Join(localDir, "memory.db")
+		s, err := storage.New(dbPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error inicializando base de datos local: %v\n", err)
+			return 1
+		}
+		s.Close()
+		fmt.Printf("✅ Cogni local inicializado en: %s\n", dbPath)
+		fmt.Printf("💡 Proyecto detectado: %s\n", core.DetectProjectName())
+		fmt.Println("💡 Las skills de IA son configuración global. Usa 'cogni init' (sin --project) para instalarlas.")
+	} else {
 		dir := core.GetGlobalCogniDir()
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			fmt.Fprintf(os.Stderr, "Error creando directorio global: %v\n", err)
@@ -140,36 +164,10 @@ func handleInit(args []string) int {
 		}
 		s.Close()
 		fmt.Printf("✅ Cogni global inicializado en: %s\n", dbPath)
-	} else {
-		localDir := filepath.Join(".", ".cogni")
-		if err := os.MkdirAll(localDir, 0755); err != nil {
-			fmt.Fprintf(os.Stderr, "Error creando directorio .cogni: %v\n", err)
-			return 1
+
+		if !*noSkills {
+			promptAndInstallSkills(*allSkills)
 		}
-
-		dbPath := filepath.Join(localDir, "memory.db")
-		s, err := storage.New(dbPath)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error inicializando base de datos local: %v\n", err)
-			return 1
-		}
-		s.Close()
-
-		fmt.Printf("✅ Cogni local inicializado en: %s\n", dbPath)
-		fmt.Printf("💡 Proyecto detectado: %s\n", core.DetectProjectName())
-	}
-
-	// Skills: en init local solo se instalan si se pide explícitamente (--skills o --all)
-	// En init global se instalan por defecto salvo --no-skills
-	shouldInstallSkills := false
-	if *forceGlobal {
-		shouldInstallSkills = !*noSkills
-	} else {
-		shouldInstallSkills = (*withSkills || *allSkills) && !*noSkills
-	}
-
-	if shouldInstallSkills {
-		promptAndInstallSkills(*allSkills)
 	}
 
 	return 0
